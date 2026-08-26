@@ -1,138 +1,73 @@
 # DevOps & CI/CD
 
-**Stack:** GitHub Actions · GitHub-hosted runners · macOS + Ubuntu  
-**GitHub Tier:** Free  
-
----
+Three GitHub Actions workflows on free tier.
+All configs validated automatically on push/PR.
 
 ## Workflows
 
-Tres workflows, cada uno con un propósito distinto:
-
 | Workflow | Runner | Trigger | Duration |
-|----------|--------|---------|-----------------|
-| `validate.yml` | `ubuntu-latest` | push to develop, PR to main/develop | ~2 min |
-| `validate-macos.yml` | `macos-latest` | push to develop, PR to main | ~5-8 min |
-| `security.yml` | `ubuntu-latest` | push to main/develop, PR to main/develop, weekly | ~4 min |
+|----------|--------|---------|----------|
+| `validate.yml` | Ubuntu | push develop, PR to main/develop | ~2 min |
+| `validate-macos.yml` | macOS | push develop, PR to main | ~6 min |
+| `security.yml` | Ubuntu | push main/develop, weekly scan | ~4 min |
 
----
+## What Gets Validated
 
-## validate.yml — Linting rápido (Ubuntu)
+**validate.yml (Ubuntu):**
+- ShellCheck on `scripts/`
+- ZSH syntax: `zsh -n` on zshrc + all `zsh.d/` modules
+- Tmux syntax: `tmux source-file tmux.conf`
+- Markdown linting
 
-Validaciones baratas que no necesitan macOS real:
+**validate-macos.yml (macOS):**
+- Install tools: brew + mise
+- Symlink configs
+- ZSH startup time (threshold: 500ms, typically 47ms)
+- Tmux config validation
+- Neovim Lua syntax
+- Kitty config validation
+- mise doctor
 
-- **ShellCheck** — análisis estático de `scripts/`
-- **ZSH syntax** — `zsh -n` en `zshrc` y todos los módulos de `zsh.d/`
-- **TMUX syntax** — `tmux source-file tmux.conf`
-- **Markdownlint** — formato de todos los `*.md`
+**security.yml (Ubuntu):**
+- Gitleaks: scan git history for secrets
+- Trivy: detect security misconfigs
 
----
+## Branch Rules
 
-## validate-macos.yml — Validación completa del stack (macOS)
+Free-tier rulesets protect branches:
 
-Runner **GitHub-hosted `macos-latest`** — on-demand nativo, sin setup manual.
+| Branch | Protection |
+|--------|-----------|
+| `main` | No deletion, no force-push, PR + all checks required |
+| `develop` | No deletion, no force-push |
 
-Un único job `validate` con estos steps:
-
-| Step | What it does |
-|------|----------|
-| Install tools | `brew install tmux neovim kitty` + mise via curl |
-| Symlink configs | Symlinks to `$GITHUB_WORKSPACE` (no `make profile`, avoids install-tpm side-effects) |
-| **[ZSH]** Syntax | `zsh -n` en zshrc + 11 módulos de `zsh.d/` |
-| **[ZSH]** Startup time | Pre-instala zinit → 3 runs de `zsh -i -c exit`, threshold 500ms |
-| **[TMUX]** Validate | `tmux source-file ~/.tmux.conf` |
-| **[Kitty]** Validate | `kitty --check-config` (graceful si no hay GPU/display) |
-| **[Nvim]** Validate | `nvim --headless +qa` — config Lua sin descargar plugins |
-| **[Mise]** Validate | `mise --version && mise doctor` |
-| Step Summary | Tabla de resultados en GitHub Actions |
-
-En PRs: comenta automáticamente los tiempos de startup de ZSH.
-
----
-
-## security.yml — Seguridad (Ubuntu)
-
-- **Gitleaks** — full git history scan for leaked secrets
-- **Trivy** — detecta misconfiguraciones de seguridad, sube SARIF al Security tab
-
----
-
-## Gitflow
-
-```text
-main (stable)
-  ↑ PR requerido — todos los workflows deben pasar
-  ├─ validate.yml          (shellcheck, zsh syntax, markdownlint)
-  ├─ validate-macos.yml    (ZSH, TMUX, Kitty, Nvim, Mise)
-  └─ security.yml          (gitleaks, trivy)
-
-develop (integración)
-  ↑ workflows para feedback
-  └─ validate.yml + validate-macos.yml
-
-feature/* (trabajo)
-  └─ pre-commit hooks locales únicamente
-```
-
----
-
-## Branch protection
-
-Configurar en **Settings → Branches → Branch protection rules** para `main`:
-
-```text
-Require status checks to pass before merging:
-  ✓ Validate (ubuntu)
-  ✓ macOS Config Validation
-  ✓ Secret Scan (Gitleaks)
-Require branches to be up to date: YES
-Restrict force pushes: YES
-```
-
----
-
-## Troubleshooting local
-
-Si los workflows fallan, reproducir localmente:
+## Git Workflow
 
 ```bash
-# Validar sintaxis
-bash scripts/validate-configs.sh
+# Start feature
+git checkout -b feat/name develop
 
-# ZSH módulos
-for f in zsh.d/*.zsh; do zsh -n "$f"; done
+# Commit (conventional format)
+git commit -m "feat(scope): description"
 
-# TMUX
-tmux source-file ~/.tmux.conf
+# Push + open PR
+git push -u origin feat/name
+gh pr create --base develop
 
-# Startup time
-for i in 1 2 3; do time zsh -i -c exit; done
-
-# Verificar prereqs
-make verify
+# Merge (squash)
+gh pr merge <#> --squash --delete-branch
 ```
 
-**ZSH startup > 500ms:**
+## Troubleshooting Locally
+
+If workflows fail, debug locally:
 
 ```bash
-# Perfilar módulo a módulo
-for f in ~/.zsh.d/*.zsh; do
-  echo "=== $(basename $f) ===" && time zsh -n "$f"
-done
+bash scripts/validate-configs.sh    # All checks
+make verify                         # System prereqs
+zsh -n zshrc                        # ZSH syntax
+for f in zsh.d/*.zsh; do zsh -n "$f"; done  # Modules
+tmux source-file ~/.tmux.conf       # Tmux
 ```
 
----
-
-## FAQ
-
-**¿Costo del runner macOS?**  
-Cero. GitHub-hosted `macos-latest` en free tier usa el multiplicador de 10x minutos. Con ~200 minutos macOS/mes disponibles, una run de ~6 min deja margen para ~30 runs mensuales.
-
-**¿Necesito configurar el runner?**  
-No. GitHub lo levanta automáticamente en cada workflow run. No hay scripts, LaunchD, ni tokens que gestionar.
-
-**¿Puedo desarrollar offline?**  
-Sí. Los workflows no corren, pero puedes validar todo localmente con `bash scripts/validate-configs.sh` y `make verify`.
-
-**¿Qué versión de macOS usa el runner?**  
-`macos-latest` apunta a la última versión estable disponible en GitHub (actualmente macOS 15 Sequoia, Apple Silicon M-series).
+See [github.dotfiles.md](github.dotfiles.md) for commit convention details.

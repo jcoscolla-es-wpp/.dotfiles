@@ -1,148 +1,81 @@
 # Neovim Configuration
 
-Lua-based Neovim config with `lazy.nvim` as plugin manager. Entry point: `nvim/init.lua`.
+Fast, extensible Lua config.
+Plugin manager: `lazy.nvim`. LSP servers auto-installed via Mason.
 
 ## Structure
 
 ```text
 nvim/
-├── init.lua                    # Bootstrap: leader, lazy.nvim, core modules
-├── lazy-lock.json              # Plugin version lockfile
+├── init.lua              # Bootstrap: lazy.nvim setup
+├── lazy-lock.json        # Plugin version lockfile
 └── lua/
     ├── config/
-    │   ├── options.lua         # vim.opt settings
-    │   ├── keymaps.lua         # Global keymaps (no plugin deps)
-    │   └── autocmds.lua        # Autocommands
+    │   ├── options.lua   # vim.opt settings
+    │   ├── keymaps.lua   # Global keymaps
+    │   └── autocmds.lua  # Autocommands
     └── plugins/
-        ├── editor.lua          # Theme, file explorer, telescope, statusline, git
-        ├── lsp.lua             # Mason + nvim-lspconfig + mason-lspconfig
-        ├── completion.lua      # nvim-cmp + LuaSnip + sources
-        └── treesitter.lua      # Treesitter parsers
+        ├── editor.lua    # Theme, explorer, statusline, git
+        ├── lsp.lua       # LSP servers (Mason)
+        ├── completion.lua # Autocompletion
+        └── treesitter.lua # Syntax parsing
 ```
 
-## Plugin Loading Strategy
+## Language Support (LSP)
 
-`lazy.nvim` is bootstrapped from `~/.local/share/nvim/lazy/lazy.nvim`. All plugins default to `lazy = true`. Several built-in plugins are disabled for performance: `gzip`, `matchit`, `matchparen`, `netrwPlugin`, `tarPlugin`, `tohtml`, `tutor`, `zipPlugin`.
+| Language | Server |
+|----------|--------|
+| Lua | lua_ls |
+| Python | pyright |
+| TypeScript/JavaScript | ts_ls |
+| Go | gopls |
+| Rust | rust_analyzer |
+| Bash | bashls |
+| JSON/YAML | jsonls, yamlls |
 
-## LSP Servers (auto-installed via Mason)
+Install via `:Mason` command.
 
-| Server | Language |
-|--------|---------|
-| `lua_ls` | Lua (with Neovim globals) |
-| `pyright` | Python (typeCheckingMode: basic) |
-| `ts_ls` | TypeScript / JavaScript |
-| `gopls` | Go |
-| `rust_analyzer` | Rust |
-| `bashls` | Bash |
-| `jsonls` | JSON |
-| `yamlls` | YAML |
-| `dockerls` | Dockerfile |
-| `terraformls` | Terraform |
+## Core Plugins
 
-All servers share a common `on_attach` function and `cmp_nvim_lsp` capabilities.
+| Plugin | What it does |
+|--------|--------------|
+| `folke/tokyonight.nvim` | Theme (Night) |
+| `nvim-neo-tree/neo-tree.nvim` | File explorer |
+| `nvim-telescope/telescope.nvim` | Fuzzy finder |
+| `nvim-lualine/lualine.nvim` | Statusline |
+| `lewis6991/gitsigns.nvim` | Git diff signs |
+| `hrsh7th/nvim-cmp` | Autocompletion |
 
-## Key Plugins
+## Essential Keybindings
 
-| Plugin | Trigger | Purpose |
-|--------|---------|---------|
-| `folke/tokyonight.nvim` | eager | Colorscheme (night style) |
-| `nvim-neo-tree/neo-tree.nvim` | `Neotree` cmd | File explorer |
-| `nvim-telescope/telescope.nvim` | `Telescope` cmd | Fuzzy finder |
-| `nvim-lualine/lualine.nvim` | `VeryLazy` | Statusline (tokyonight theme) |
-| `akinsho/bufferline.nvim` | `VeryLazy` | Buffer tabs |
-| `lewis6991/gitsigns.nvim` | `BufReadPost` | Git diff signs |
-| `hrsh7th/nvim-cmp` | `InsertEnter` | Autocompletion |
-| `L3MON4D3/LuaSnip` | via cmp | Snippet engine (friendly-snippets) |
-| `christoomey/vim-tmux-navigator` | keys | Tmux pane navigation |
-| `folke/which-key.nvim` | `VeryLazy` | Keybinding helper |
-| `numToStr/Comment.nvim` | `gcc`/`gc` | Code commenting |
-| `kylechui/nvim-surround` | `VeryLazy` | Surround text objects |
-| `windwp/nvim-autopairs` | `InsertEnter` | Auto-close brackets |
-
-## Key Bindings
-
-Leader key: `<Space>`
-
-### Navigation
+Leader = `<Space>`
 
 | Key | Action |
 |-----|--------|
-| `C-h/j/k/l` | Navigate splits (tmux-aware) |
-| `S-h` / `S-l` | Previous / next buffer |
-| `C-d` / `C-u` | Scroll half-page (cursor centered) |
-| `n` / `N` | Next/prev search (cursor centered) |
-
-### Files & Search
-
-| Key | Action |
-|-----|--------|
-| `C-p` / `<leader>ff` | Telescope: find files |
-| `<leader>fg` | Telescope: live grep |
-| `<leader>fb` | Telescope: buffers |
-| `<leader>fr` | Telescope: recent files |
-| `<leader>fd` | Telescope: diagnostics |
-| `<leader>/` | Fuzzy search in current buffer |
-| `<leader>n` / `C-n` | Toggle Neo-tree |
-
-### LSP
-
-| Key | Action |
-|-----|--------|
+| `C-n` | Toggle file explorer |
+| `C-p` | Find files |
+| `<leader>fg` | Search text |
 | `gd` | Go to definition |
-| `gD` | Go to declaration |
 | `gr` | Go to references |
-| `gi` | Go to implementation |
 | `K` | Hover documentation |
 | `<leader>ca` | Code action |
 | `<leader>rn` | Rename symbol |
 | `<leader>f` | Format buffer |
-| `<leader>D` | Type definition |
-| `[d` / `]d` | Previous / next diagnostic |
-| `<leader>e` | Show diagnostic float |
+| `[d` / `]d` | Previous/next diagnostic |
 
-### Git
+See [REFERENCE.md](REFERENCE.md) for full keybindings.
 
-| Key | Action |
-|-----|--------|
-| `]h` / `[h` | Next / prev hunk |
-| `<leader>hs` | Stage hunk |
-| `<leader>hr` | Reset hunk |
-| `<leader>hp` | Preview hunk |
-| `<leader>hb` | Full blame line |
-
-### Editing
-
-| Key | Action |
-|-----|--------|
-| `jk` / `kj` | Exit insert mode |
-| `A-j` / `A-k` | Move line up/down |
-| `<` / `>` (visual) | Indent and stay in visual |
-| `p` (visual) | Paste without yanking selection |
-| `<leader>w` / `<leader>W` | Save / save all |
-| `<leader>sv` / `<leader>sh` | Vertical / horizontal split |
-
-## Completion Sources (priority order)
-
-1. `nvim_lsp` — LSP completions
-2. `luasnip` — Snippets (from `friendly-snippets`)
-3. `buffer` — Current buffer words
-4. `path` — Filesystem paths
-
-`Tab` cycles completions or jumps snippet placeholders. `CR` confirms selection.
-
-## Reset Neovim
+## Common Commands
 
 ```bash
+# Reset (clean install)
 rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-nvim   # fresh install via lazy.nvim
-```
+nvim   # Lazy.nvim installs plugins
 
-## Update Plugins
+# Update plugins
+nvim +"Lazy sync" +qa
 
-```bash
-nvim +"Lazy sync" +qa    # update + quit
-# or inside nvim:
-:Lazy sync
-:Lazy update
-:Mason                   # manage LSP servers
+# Manage LSP
+:Mason              # Install servers
+:LspInfo            # Check status
 ```
