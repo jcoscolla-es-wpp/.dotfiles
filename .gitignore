@@ -38,6 +38,6 @@ credentials/
 # Pre-commit cache
 .pre-commit-cache/
 
-# Claude Code — project-local instructions and sensitive config
-CLAUDE.md
-zsh.d/claude.zsh
+# Claude Code — local-only configuration (removed)
+# Note: claude.zsh was removed in commit b1df7e6
+# Use .opencode/CLAUDE.md for OpenCode integration guidance

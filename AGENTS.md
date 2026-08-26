@@ -2,6 +2,61 @@
 
 Agent-focused guidance for working in this macOS dotfiles repository. Every entry answers: "Would an agent likely miss this?"
 
+## OpenCode Integration
+
+This repository is **100% OpenCode-native**. All agents, skills, and rules are configured in `.opencode/opencode.json`.
+
+### Quick Start with OpenCode
+
+```bash
+# Invoke the primary agent (shadow-architect)
+@shadow-architect audit this repository
+@shadow-architect review the ZSH configuration
+
+# Load a specific skill
+@shadow-architect /skill load validate-dotfiles
+@shadow-architect /skill load zsh-modules
+
+# Invoke specialized agents
+@rankle audit for security vulnerabilities
+@atticus audit README.md for Diátaxis compliance
+@daedalus review the Makefile for best practices
+```
+
+### Available Agents
+
+- **shadow-architect** — Meta-orchestrator, defines standards, coordinates work
+- **rankle** — Purple Team lead, orchestrates security assessments
+- **puck** — Defensive security executor (scans, audits, hardening)
+- **shadow** — Offensive security executor (exploitation, PoCs)
+- **daedalus** — Infrastructure/IaC architect (Terraform, DevSecOps)
+- **atticus** — Documentation architect (Markdown, Diátaxis, style)
+
+### Available Skills
+
+- **env-setup** — Installation order, prerequisites, troubleshooting
+- **makefile-targets** — All Makefile targets reference
+- **neovim-setup** — lazy.nvim, LSP, Mason configuration
+- **shell-best-practices** — Shell scripting patterns
+- **tmux-config** — Prefix, pbcopy, keybindings
+- **validate-dotfiles** — Syntax, architecture, validation
+- **zsh-modules** — Loading order, module responsibilities
+- **git-workflow** — Conventional commits, co-author, branch strategy
+- **opencode-integration** — How to use OpenCode with this project
+
+### Configuration Files
+
+- **.opencode/opencode.json** — Project-level configuration (default agent, permissions, skills paths)
+- **.opencode/CLAUDE.md** — OpenCode integration guide (workflows, troubleshooting)
+- **AGENTS.md** — This file (agent guidance and project constraints)
+- **rules/** — Universal and stack-specific standards
+
+### Key Principle
+
+**Read AGENTS.md first.** It's the source of truth for agent guidance and project constraints. All agents load this file as an instruction.
+
+---
+
 ## What This Repo Is
 
 Personal macOS development dotfiles. All components symlink into `~/.zshrc`, `~/.zsh.d/`, `~/.config/nvim/`, `~/.tmux.conf`, and `~/.config/kitty/`. macOS-only. Single source of truth is `Makefile`.
@@ -54,7 +109,7 @@ env.zsh -> options.zsh -> history.zsh -> plugins.zsh -> prompt.zsh →
 completion.zsh -> colors.zsh -> kitty.zsh -> alias.zsh -> tools.zsh
 ```
 
-**Note:** `claude.zsh` (contains AWS Bedrock secrets) and optional `oracle.zsh` (user-specific Oracle DB config) are untracked and should not be committed — see **Sensitive Configuration Files** and **Optional Local Modules** sections below.
+**Note:** `oracle.zsh` (user-specific Oracle DB config) is optional and untracked — see **Optional Local Modules** section below.
 
 **Critical:** `tools.zsh` is the integration hub (mise, fzf, bat config, zoxide). Changes here affect everything downstream.
 
@@ -73,8 +128,8 @@ completion.zsh -> colors.zsh -> kitty.zsh -> alias.zsh -> tools.zsh
 | `Makefile` | Installer & orchestrator | YES |
 | `.pre-commit-config.yaml` | Git hooks | YES |
 | `scripts/validate-configs.sh` | Config validation | YES |
+| `.opencode/` | OpenCode configuration | YES |
 | `docs/*.dotfiles.md` | Reference docs (per-technology) | NO — reference only |
-| `CLAUDE.md` | Claude Code guidance (for Claude Code) | NO — context file |
 
 **Why:** Agents might accidentally delete or skip critical modules, breaking the entire system.
 
@@ -100,13 +155,18 @@ Native `ls` avoids iCloud/network file timeout issues (`os error 60`). `lsd` ava
 
 Customize by editing `PROMPT_*` variables at the top of `zsh.d/prompt.zsh` directly. No separate config file exists.
 
-### 6. VSCODE_INJECTION Guard Removed
+### 6. Tmux Auto-Start in Login Shells Only
 
-Previous design included `[[ -z "$VSCODE_INJECTION" ]]` to prevent tmux auto-start in VS Code. **Removed in current HEAD** for simpler startup logic.
+Tmux auto-starts in login shells with a TTY (not in non-interactive shells or IDEs). This prevents unexpected terminal multiplexing in environments like VS Code or Claude Code.
 
-**Impact:** Tmux may auto-start in IDE environments (like Claude Code) where unexpected terminal multiplexing could interfere. Workaround: set `TMUX` env var or update zshrc guard if needed for your environment.
+**Guard in zshrc:**
+```bash
+if [[ -z "$TMUX" ]] && [[ -o login ]] && [[ -t 0 ]]; then
+  exec tmux new-session -A -s main
+fi
+```
 
-**Why:** Simplified startup logic prioritized; IDE-specific handling deferred to user configuration.
+**Why:** Simplified startup logic; IDE-specific handling deferred to environment configuration.
 
 ### 7. Version Manager: mise (Not ASDF)
 
@@ -120,10 +180,13 @@ Files in `.gitignore` — never create, edit, or commit these:
 
 | File | Purpose | Why Excluded |
 |------|---------|--------------|
-| `zsh.d/claude.zsh` | AWS Bedrock model ARN and environment variables | Contains sensitive credentials |
-| `CLAUDE.md` | Per-project Claude Code instructions (if user-specific) | May contain sensitive configs |
+| `.env` | Environment variables with secrets | Contains sensitive credentials |
+| `secrets/` | Sensitive configuration files | Contains sensitive data |
+| `credentials/` | API keys and tokens | Contains sensitive data |
 
 These are intentionally excluded from version control. Agents should never write to them or attempt to commit them.
+
+**Note:** `claude.zsh` and `CLAUDE.md` have been removed. Use `.opencode/CLAUDE.md` for OpenCode integration guidance instead.
 
 ## Optional Local Modules
 
@@ -153,10 +216,13 @@ bash scripts/validate-configs.sh
 
 - `README.md`: Main docs (Quick Start, Tech Stack, Structure, Usage)
 - `docs/*.dotfiles.md`: Per-technology reference (zsh, tmux, neovim, kitty, makefile, mise, github)
-- `CLAUDE.md`: Claude Code guidance (detailed version of architecture)
+- `AGENTS.md`: Agent guidance and project constraints (source of truth)
 - **Never create other `.md` files** (reports, changelogs, analysis). Only edit these three locations.
 
-**Note:** `.opencode/` files are separate configuration for OpenCode agent infrastructure, not dotfiles documentation.
+**Note:** `.opencode/` files are separate configuration for OpenCode agent infrastructure:
+- `.opencode/opencode.json` — Project-level OpenCode configuration
+- `.opencode/CLAUDE.md` — OpenCode integration guide (replaces root CLAUDE.md)
+- `.opencode/skills/` — Reusable knowledge modules for agents
 
 **Why:** Agents often create new markdown files instead of updating existing ones.
 
