@@ -34,15 +34,39 @@ This repository is **100% OpenCode-native**. All agents, skills, and rules are c
 
 ### Available Skills
 
-- **env-setup** — Installation order, prerequisites, troubleshooting
-- **makefile-targets** — All Makefile targets reference
-- **neovim-setup** — lazy.nvim, LSP, Mason configuration
-- **shell-best-practices** — Shell scripting patterns
-- **tmux-config** — Prefix, pbcopy, keybindings
-- **validate-dotfiles** — Syntax, architecture, validation
-- **zsh-modules** — Loading order, module responsibilities
-- **git-workflow** — Conventional commits, co-author, branch strategy
-- **opencode-integration** — How to use OpenCode with this project
+Skills are now consolidated into rules for better maintainability. Only 4 unique skills remain:
+
+- **makefile-targets** — Quick reference of all Makefile targets
+- **neovim-setup** — Neovim plugin configuration guide
+- **tmux-config** — Tmux keybindings and configuration guide
+- **zsh-modules** — ZSH module loading order guide
+
+**Note:** Detailed knowledge is now in rules (see below). Skills are quick references only.
+
+### Available Rules
+
+All project standards and best practices are defined in rules:
+
+**Universal Rules:**
+- `communication.rule.md` — English-only, concise, no filler
+- `code-quality.rule.md` — DRY, KISS, SOLID principles
+- `safety.rule.md` — Non-destructive, research-first
+- `reporting.rule.md` — Clear findings, actionable recommendations
+
+**Stack Rules:**
+- `shell.rule.md` — Shell scripting, ZSH setup, environment configuration
+- `github.rule.md` — Git workflow, conventional commits, co-author requirement
+- `opencode.rule.md` — OpenCode configuration, permissions, agent usage
+- `makefile.rule.md` — Makefile targets, installation order, idempotency
+- `neovim.rule.md` — Neovim configuration, lazy.nvim, LSP setup
+- `tmux.rule.md` — Tmux configuration, keybindings, clipboard integration
+- `zsh.rule.md` — ZSH modules, loading order, plugin management
+- `markdown.rule.md` — Markdown style and conventions
+- `diagrams.rule.md` — Diagram standards
+- `flutter.rule.md` — Flutter development standards
+- `python.rule.md` — Python development standards
+- `color.rule.md` — Color scheme standards
+- `zensical.rule.md` — Zensical documentation standards
 
 ### Configuration Files
 
