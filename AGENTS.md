@@ -4,17 +4,17 @@ Agent-focused guidance for working in this macOS dotfiles repository. Every entr
 
 ## OpenCode Integration
 
-This repository is **100% OpenCode-native**. All agents, skills, and rules are configured in `.opencode/opencode.json`.
+This project uses **OpenCode global configuration** from `~/.config/opencode/`.
 
 ### Quick Start with OpenCode
 
 ```bash
-# Invoke the primary agent (shadow-architect)
+# Invoke agents (all globally configured)
 @shadow-architect audit this repository
 @shadow-architect review the ZSH configuration
 
-# Load a specific skill
-@shadow-architect /skill load validate-dotfiles
+# Load skills relevant to this project
+@shadow-architect /skill load makefile-targets
 @shadow-architect /skill load zsh-modules
 
 # Invoke specialized agents
@@ -23,7 +23,9 @@ This repository is **100% OpenCode-native**. All agents, skills, and rules are c
 @daedalus review the Makefile for best practices
 ```
 
-### Available Agents
+### Available Agents (Global)
+
+All agents are configured in `~/.config/opencode/agents/`:
 
 - **shadow-architect** — Meta-orchestrator, defines standards, coordinates work
 - **rankle** — Purple Team lead, orchestrates security assessments
@@ -32,20 +34,20 @@ This repository is **100% OpenCode-native**. All agents, skills, and rules are c
 - **daedalus** — Infrastructure/IaC architect (Terraform, DevSecOps)
 - **atticus** — Documentation architect (Markdown, Diátaxis, style)
 
-### Available Skills
+### Available Skills (Relevant to This Project)
 
-Skills are now consolidated into rules for better maintainability. Only 4 unique skills remain:
+Skills are configured globally in `~/.config/opencode/skills/`:
 
 - **makefile-targets** — Quick reference of all Makefile targets
 - **neovim-setup** — Neovim plugin configuration guide
 - **tmux-config** — Tmux keybindings and configuration guide
 - **zsh-modules** — ZSH module loading order guide
 
-**Note:** Detailed knowledge is now in rules (see below). Skills are quick references only.
+**Note:** Detailed knowledge is in rules (loaded automatically). Skills are quick references only.
 
-### Available Rules
+### Available Rules (Always Loaded)
 
-All project standards and best practices are defined in rules:
+All project standards and best practices are defined in `~/.config/opencode/rules/`:
 
 **Universal Rules:**
 - `communication.rule.md` — English-only, concise, no filler
@@ -61,23 +63,16 @@ All project standards and best practices are defined in rules:
 - `neovim.rule.md` — Neovim configuration, lazy.nvim, LSP setup
 - `tmux.rule.md` — Tmux configuration, keybindings, clipboard integration
 - `zsh.rule.md` — ZSH modules, loading order, plugin management
-- `markdown.rule.md` — Markdown style and conventions
-- `diagrams.rule.md` — Diagram standards
-- `flutter.rule.md` — Flutter development standards
-- `python.rule.md` — Python development standards
-- `color.rule.md` — Color scheme standards
-- `zensical.rule.md` — Zensical documentation standards
 
-### Configuration Files
+### OpenCode Configuration
 
-- **.opencode/opencode.json** — Project-level configuration (default agent, permissions, skills paths)
-- **.opencode/CLAUDE.md** — OpenCode integration guide (workflows, troubleshooting)
-- **AGENTS.md** — This file (agent guidance and project constraints)
-- **rules/** — Universal and stack-specific standards
+- **Global config:** `~/.config/opencode/opencode.json`
+- **Project context:** This `AGENTS.md` file (loaded automatically)
+- **No local config:** This project uses global OpenCode configuration only
 
 ### Key Principle
 
-**Read AGENTS.md first.** It's the source of truth for agent guidance and project constraints. All agents load this file as an instruction.
+**Read AGENTS.md first.** It's the source of truth for project-specific guidance and constraints. OpenCode loads this file as an instruction when working in this project.
 
 ---
 
@@ -152,7 +147,7 @@ completion.zsh -> colors.zsh -> kitty.zsh -> alias.zsh -> tools.zsh
 | `Makefile` | Installer & orchestrator | YES |
 | `.pre-commit-config.yaml` | Git hooks | YES |
 | `scripts/validate-configs.sh` | Config validation | YES |
-| `.opencode/` | OpenCode configuration | YES |
+| `AGENTS.md` | OpenCode project context | **YES** |
 | `docs/*.dotfiles.md` | Reference docs (per-technology) | NO — reference only |
 
 **Why:** Agents might accidentally delete or skip critical modules, breaking the entire system.
@@ -243,10 +238,7 @@ bash scripts/validate-configs.sh
 - `AGENTS.md`: Agent guidance and project constraints (source of truth)
 - **Never create other `.md` files** (reports, changelogs, analysis). Only edit these three locations.
 
-**Note:** `.opencode/` files are separate configuration for OpenCode agent infrastructure:
-- `.opencode/opencode.json` — Project-level OpenCode configuration
-- `.opencode/CLAUDE.md` — OpenCode integration guide (replaces root CLAUDE.md)
-- `.opencode/skills/` — Reusable knowledge modules for agents
+**Note:** OpenCode configuration is global (`~/.config/opencode/`). This project only maintains `AGENTS.md` as project-specific context.
 
 **Why:** Agents often create new markdown files instead of updating existing ones.
 
