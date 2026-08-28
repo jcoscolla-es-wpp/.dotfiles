@@ -30,7 +30,7 @@ source "${ZSH_CONFIG_DIR}/colors.zsh"     # Color configuration
 source "${ZSH_CONFIG_DIR}/kitty.zsh"      # Kitty terminal integration
 source "${ZSH_CONFIG_DIR}/alias.zsh"      # Custom aliases
 source "${ZSH_CONFIG_DIR}/tools.zsh"      # Tool integrations
-source "${ZSH_CONFIG_DIR}/claude.zsh"     # Claude Code Config
+source "${ZSH_CONFIG_DIR}/oracle.zsh"     # Oracle Config
 
 # direnv hook (deferred to not block startup)
 if command -v direnv &>/dev/null; then

@@ -1,107 +1,80 @@
 # Kitty Terminal Configuration
 
-GPU-accelerated terminal with TokyoNight Night theme, glassmorphism transparency, and macOS-native integration.
+GPU-accelerated rendering with rich features, native macOS integration.
+Theme: TokyoNight Night. Font: JetBrains Mono 10pt.
 
 ## Core Settings
 
 | Setting | Value |
 |---------|-------|
-| Font | JetBrains Mono 10pt (all variants) |
+| Font | JetBrains Mono 10pt |
 | Cell height | 120% (increased line spacing) |
-| Background opacity | 0.93 (frosted glass) |
-| Background blur | 50 (macOS frosted glass effect) |
-| Inactive window dim | 0.75 |
-| Inactive text alpha | 0.80 |
+| Background opacity | 0.93 (frosted glass effect) |
+| Background blur | 50 (macOS frosted glass) |
 | Scrollback | 10,000 lines |
 | Initial size | 1200×700 |
 | Window padding | 12px |
-| Cursor | Block, blinking at 550ms |
-
-## Color Scheme (TokyoNight Night)
-
-| Role | Hex |
-|------|-----|
-| Foreground | `#c0caf5` |
-| Background | `#1a1b26` |
-| Selection bg | `#33467c` |
-| Active border | `#7aa2f7` |
-| Active tab bg | `#7aa2f7` |
-| Inactive tab bg | `#292e42` |
-| Tab bar bg | `#15161e` |
-| URL color | `#73daca` |
-
-Normal palette: `color0-7` = TokyoNight standard. Extended: `color16=#ff9e64`, `color17=#db4b4b`.
+| Cursor | Block, blinking 550ms |
 
 ## Keyboard Shortcuts
 
-`kitty_mod` is mapped to `cmd`.
+`kitty_mod` = `Cmd` (macOS native)
 
 ### Window & Tab Management
 
 | Shortcut | Action |
 |----------|--------|
 | `cmd+n` | New OS window |
-| `cmd+w` | Close window/split |
-| `cmd+enter` | New split |
-| `cmd+]` / `cmd+[` | Next / prev split |
 | `cmd+t` | New tab |
-| `cmd+shift+w` | Close tab |
-| `cmd+shift+right/left` | Next / prev tab |
+| `cmd+w` | Close window/tab |
+| `cmd+enter` | New split |
+| `cmd+]`/`cmd+[` | Next/prev split |
+| `cmd+shift+right/left` | Next/prev tab |
 | `cmd+1-9` | Go to tab N |
 | `cmd+l` | Next layout |
 
-### Transparency Toggle (live)
+### Transparency & Scrolling
 
 | Shortcut | Action |
 |----------|--------|
 | `cmd+shift+a` | Increase opacity +0.1 |
 | `cmd+shift+s` | Decrease opacity -0.1 |
 | `cmd+shift+d` | Reset to default opacity |
+| `cmd+k` | Clear scrollback |
+| `cmd+shift+k` | Reset terminal |
+| `cmd+shift+,` | Reload config |
 
-### Scrolling
+### Search & Navigation
 
 | Shortcut | Action |
 |----------|--------|
-| `cmd+k` | Clear scrollback |
-| `cmd+shift+k` | Reset terminal |
+| `cmd+f` | Search in scrollback (fzf overlay) |
 | `cmd+up/down` | Scroll line |
 | `cmd+page_up/down` | Scroll page |
-| `cmd+home/end` | Scroll to top/bottom |
 
-### Search
+## Theme (TokyoNight Night)
 
-```bash
-cmd+f — launches fzf over screen scrollback in an overlay
-```
+| Role | Color |
+|------|-------|
+| Foreground | `#c0caf5` |
+| Background | `#1a1b26` |
+| Selection bg | `#33467c` |
+| Active border | `#7aa2f7` |
+| Active tab | `#7aa2f7` |
+| Inactive tab | `#292e42` |
+| Tab bar | `#15161e` |
 
-## macOS Integration
+## macOS Features
 
-- `hide_window_decorations titlebar-only` — clean titlebar, keeps traffic lights
-- `macos_titlebar_color background` — seamless title bar
-- `macos_colorspace displayp3` — wide color gamut on modern Macs
-- `macos_thicken_font 0.1` — slightly bolder for Retina readability
-- `allow_remote_control yes` + `listen_on unix:/tmp/kitty` — enables CLI control
-- `shell_integration no-cursor` — uses own cursor, not shell integration cursor
-- `copy_on_select yes` — primary selection → clipboard on mouse drag
+- Seamless titlebar integration
+- Wide color gamut (Display P3) on modern Macs
+- Remote control via `kitty @` CLI
+- Copy-on-select (mouse drag → clipboard)
 
-## Editor
-
-`editor nvim` — Kitty opens `nvim` for `cmd+,` (edit config).
-
-## Reload Config
-
-```bash
-# Keyboard
-cmd+shift+,   # reload kitty.conf live
-
-# Terminal
-kill -SIGUSR1 $(pgrep kitty)
-```
-
-## Adjusting Transparency
+## Transparency Adjustment
 
 ```conf
-# More see-through
+# More transparent
 background_opacity 0.88
 background_blur 40
 
@@ -110,6 +83,18 @@ background_opacity 0.95
 background_blur 70
 ```
 
+## Reload Config
+
+**Keyboard:** `cmd+shift+,`
+
+**Terminal:**
+
+```bash
+kill -SIGUSR1 $(pgrep kitty)
+```
+
 ## Tab Bar
 
-Style: `fade` (smooth gradient transitions between active/inactive tabs). Positioned at top. Shows bell/activity indicators + index and title. Tabs hidden when only 1 tab open (`tab_bar_min_tabs 2`).
+Fade style (smooth gradient). Shows activity + tab index. Hidden when only 1 tab open.
+
+See [REFERENCE.md](REFERENCE.md) for all Kitty shortcuts.

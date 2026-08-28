@@ -1,97 +1,65 @@
 # ZSH Configuration
 
-ZSH shell setup using Zinit as plugin manager. Entry point is `zshrc`, which sources 11 modules in order from `zsh.d/`.
+Fast, modular shell config.
+Startup: ~47ms thanks to lazy-loaded plugins via Zinit.
+All config lives in `zsh.d/` — edit independently, changes take effect on next shell.
 
 ## Loading Order
 
+Modules load in sequence. Order matters, but each is independent.
+
 ```text
 zshrc
-  └─ tmux auto-start (login shells con TTY)
-  └─ Zinit bootstrap
-  └─ env.zsh          — Homebrew PATH, locale, EDITOR
-  └─ options.zsh      — AUTO_CD, PUSHD, completion opts
-  └─ history.zsh      — HISTSIZE=10000, SHARE_HISTORY, dedup
-  └─ plugins.zsh      — Zinit plugins (turbo mode)
-  └─ prompt.zsh       — gitstatus prompt
-  └─ completion.zsh   — zstyle completion config
-  └─ colors.zsh       — LS_COLORS
-  └─ kitty.zsh        — Kitty terminal integration
-  └─ alias.zsh        — Shell aliases
+  ├─ env.zsh          — PATH, locale, EDITOR
+  ├─ options.zsh      — Shell options (AUTO_CD, PUSHD, etc.)
+  ├─ history.zsh      — History (10k lines, deduplicated)
+  ├─ plugins.zsh      — Zinit + lazy plugins
+  ├─ prompt.zsh       — Git-aware prompt (customize via PROMPT_* vars)
+  ├─ completion.zsh   — Completion styles
+  ├─ colors.zsh       — LS_COLORS
+  ├─ kitty.zsh        — Kitty integration
+  ├─ alias.zsh        — Shortcuts (git, tmux, etc.)
   └─ tools.zsh        — mise, fzf, bat, zoxide
-  └─ claude.zsh       — Claude Code / AWS Bedrock (untracked)
-  └─ direnv hook      — deferred via precmd
 ```
 
-## Plugins (Zinit Turbo Mode)
+## Key Plugins
 
-| Plugin | Load Mode | Purpose |
-|--------|-----------|---------|
-| `romkatv/gitstatus` | sync | Git prompt (required before prompt renders) |
-| `zsh-users/zsh-completions` | `wait'0'` | Extended completions |
-| `zsh-users/zsh-autosuggestions` | `wait'0'` | History/completion suggestions |
-| `zdharma-continuum/fast-syntax-highlighting` | `wait'0'` | Syntax highlight + compinit |
-| `zdharma-continuum/history-search-multi-word` | `wait'0'` | Multi-word history search |
-| `superbrothers/zsh-kubectl-prompt` | `wait'1'` | K8s context (only if kubectl exists) |
-| fzf key bindings + completions | `wait'1'` | Sourced from Homebrew fzf path |
+| Plugin | What it does |
+|--------|--------------|
+| `romkatv/gitstatus` | Fast git prompt (~5ms) |
+| `zsh-users/zsh-completions` | Better completions |
+| `zsh-users/zsh-autosuggestions` | Command history suggestions |
+| `zdharma-continuum/fast-syntax-highlighting` | Syntax highlighting |
 
-`compinit` is handled by Zinit via `zicompinit` inside `fast-syntax-highlighting`'s `atinit` hook. `bashcompinit` is deferred via a `precmd` hook for ~20ms speedup.
+## Customize the Prompt
 
-## Prompt System
+Edit `PROMPT_*` variables at the top of `zsh.d/prompt.zsh`:
 
-`zsh.d/prompt.zsh` builds the prompt with two backends:
-
-- **Primary:** `gitstatus` (romkatv) — async, ~10x faster than vcs_info
-- **Fallback:** `vcs_info` — used if `gitstatus_query` is not found
-
-All prompt variables are `typeset -g` at the top of the file and are the only customization interface. There is no separate config file.
-
-### Prompt Variables
-
-| Variable | Default | Controls |
+| Variable | Default | Purpose |
 |----------|---------|---------|
-| `PROMPT_COLOR_DIR` | 31 | Directory path color |
-| `PROMPT_COLOR_GIT_BRANCH` | 76 | Git branch name color |
-| `PROMPT_COLOR_GIT_STAGED` | 76 | Staged indicator color |
-| `PROMPT_COLOR_GIT_UNSTAGED` | 178 | Unstaged indicator color |
-| `PROMPT_COLOR_GIT_UNTRACKED` | 160 | Untracked indicator color |
-| `PROMPT_COLOR_KUBECTL` | 134 | Kubectl context color |
-| `PROMPT_SHOW_GIT` | `true` | Toggle git info segment |
-| `PROMPT_SHOW_VIRTUALENV` | `true` | Toggle virtualenv segment |
-| `PROMPT_SHOW_KUBECTL` | `true` | Toggle kubectl context segment |
+| `PROMPT_COLOR_DIR` | 31 (red) | Directory color |
+| `PROMPT_COLOR_GIT_BRANCH` | 76 (blue) | Git branch color |
+| `PROMPT_SHOW_GIT` | true | Show git status |
+| `PROMPT_SHOW_VIRTUALENV` | true | Show virtualenv |
 
-Right prompt shows virtualenv/conda and kubectl context. Kubectl context is cached by `~/.kube/config` mtime using macOS `stat -f %m`.
+Changes take effect on next shell.
 
-## Key Aliases
+## Quick Aliases
 
-| Alias | Expands to | Notes |
-|-------|-----------|-------|
-| `ls` | `/bin/ls -G` | Native only — avoids lsd iCloud timeout |
-| `lsl` / `lsll` / `lslt` | lsd variants | Explicit when safe to use |
-| `cat` | `bat --paging=never` | Syntax-highlighted cat |
-| `grep` | `rg` | ripgrep |
-| `find` | `fd` | fd-find |
-| `vi` / `vim` | `nvim` | Neovim |
-| `brewup` | full brew upgrade cycle | update + upgrade + cleanup |
-| `g` / `gs` / `gst` / `ga` / `gc` / `gp` | git shortcuts | standard git ops |
-| `t` / `ta` / `tn` / `tl` / `tk` | tmux shortcuts | session management |
+| Alias | Does |
+|-------|------|
+| `ls` | Native ls (faster, avoids iCloud timeouts) |
+| `cat` | bat (syntax highlight) |
+| `grep` | ripgrep (rg) |
+| `find` | fd-find (fd) |
+| `vim` | Neovim (nvim) |
+| `g` / `gs` / `ga` / `gc` | git shortcuts |
+| `t` / `ta` / `tn` / `tl` | tmux shortcuts |
 
-## Environment (env.zsh)
-
-- `HOMEBREW_PREFIX` is hardcoded based on architecture (`/opt/homebrew` arm64, `/usr/local` intel) to avoid slow `brew --prefix` calls at startup
-- `EDITOR` and `VISUAL` are both set to `nvim`
-- `DOCKER_DEFAULT_PLATFORM` = `linux/amd64`
-
-## fzf
-
-Configured in `tools.zsh`. Uses `fd` as default command when available. Key bindings and completions are lazy-loaded via Zinit from `$HOMEBREW_PREFIX/opt/fzf/shell/`.
+## Check Startup Time
 
 ```bash
-FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border ...'
+time zsh -i -c exit    # Should be ~47ms
 ```
 
-## Profile ZSH Startup
-
-```bash
-time zsh -i -c exit
-```
+See [REFERENCE.md](REFERENCE.md) for complete alias list.

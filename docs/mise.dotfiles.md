@@ -1,22 +1,16 @@
 # mise Version Manager
 
-mise is installed via Homebrew and activated in `zsh.d/tools.zsh`. Replaces ASDF as the development tool version manager. Reads `~/.tool-versions` natively (ASDF-compatible format) and supports `mise.toml` per-project overrides.
-
-## Activation (tools.zsh)
-
-```zsh
-if command -v mise &>/dev/null; then
-  eval "$(mise activate zsh)"
-fi
-```
-
-This injects mise shims into the PATH and enables hook-based version switching.
+Modern replacement for ASDF.
+Installed via Homebrew. Activated in `zsh.d/tools.zsh`.
+Reads `~/.tool-versions` (ASDF-compatible) and supports `mise.toml` for per-project overrides.
 
 ## Managed Tools
 
-| Tool | Makefile target | Notes |
-|------|----------------|-------|
-| Node.js | `make nodejs` | `node@lts` — latest active LTS |
+Install each via Makefile target:
+
+| Tool | Command | Notes |
+|------|---------|-------|
+| Node.js | `make nodejs` | Latest LTS (even-numbered: 20, 22, 24…) |
 | Go | `make golang` | Latest stable |
 | Ruby | `make ruby` | Latest stable |
 | Terraform | `make terraform` | Latest stable |
@@ -24,54 +18,36 @@ This injects mise shims into the PATH and enables hook-based version switching.
 | Helm | `make helm` | Latest stable |
 | kind | `make kind` | Latest stable |
 | AWS CLI | `make aws` | Latest stable |
-| kubectx | `make kubectx` | Installed via Homebrew (no mise backend) |
 
-## Common Commands
+## Quick Commands
 
 ```bash
-mise ls                        # list all tools with version and source
-mise current                   # show active version for each tool
-mise use --global node@lts     # install and set Node.js LTS as global default
-mise use --global go@latest    # install and set Go latest as global default
-mise install                   # install all versions declared in ~/.tool-versions
-mise upgrade                   # upgrade all global tools to latest
-mise upgrade node              # upgrade a specific tool
-mise which node                # show path to active binary
+mise ls                        # List all tools + versions
+mise current                   # Show active version per tool
+mise use --global node@lts     # Set Node.js LTS globally
+mise upgrade                   # Upgrade all tools to latest
+mise which node                # Show path to binary
 ```
 
-## Global vs Project Versions
+## Version Resolution
 
-mise resolves versions in this priority order:
+mise checks in this order:
 
-1. `mise.toml` in current directory or any parent
-2. `.tool-versions` in current directory or any parent
-3. `~/.config/mise/config.toml` (global config)
-4. `~/.tool-versions` (global fallback — current setup)
+1. `mise.toml` in current or parent directory
+2. `.tool-versions` in current or parent directory
+3. Global config at `~/.config/mise/config.toml`
+4. Global fallback at `~/.tool-versions` (current setup)
 
-To pin a tool version for a specific project:
+Set project version:
 
 ```bash
 cd ~/my-project
-mise use node@20    # creates/updates .mise.toml in project root
+mise use node@20    # Creates .mise.toml in project root
 ```
 
-## Migrating from ASDF
-
-mise reads `~/.tool-versions` without conversion — all existing versions are picked up automatically. To install all declared tools in mise's own store:
+## Update Tools
 
 ```bash
-mise install    # downloads and caches all versions from ~/.tool-versions
-```
-
-After verifying mise works, ASDF can be removed:
-
-```bash
-brew uninstall asdf
-```
-
-## Update mise
-
-```bash
-make update           # brew upgrade mise + mise upgrade (all tools)
-brew upgrade mise     # mise binary only
+make update           # brew upgrade mise + mise upgrade all
+mise upgrade go       # Upgrade specific tool
 ```
