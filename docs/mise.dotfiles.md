@@ -32,12 +32,14 @@ mise which node                # Show path to binary
 ## Version Resolution
 
 mise checks in this order:
+
 1. `mise.toml` in current or parent directory
 2. `.tool-versions` in current or parent directory
 3. Global config at `~/.config/mise/config.toml`
 4. Global fallback at `~/.tool-versions` (current setup)
 
 Set project version:
+
 ```bash
 cd ~/my-project
 mise use node@20    # Creates .mise.toml in project root

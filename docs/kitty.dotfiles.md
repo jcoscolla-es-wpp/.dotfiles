@@ -88,6 +88,7 @@ background_blur 70
 **Keyboard:** `cmd+shift+,`
 
 **Terminal:**
+
 ```bash
 kill -SIGUSR1 $(pgrep kitty)
 ```

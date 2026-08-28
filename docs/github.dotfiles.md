@@ -64,6 +64,7 @@ See [devops.dotfiles.md](devops.dotfiles.md) for what workflows validate.
 ## Branch Protection
 
 `main` requires:
+
 - No deletion
 - No force-push
 - PR with all status checks passing
@@ -72,6 +73,7 @@ See [devops.dotfiles.md](devops.dotfiles.md) for what workflows validate.
 ## Security Features
 
 Free-tier GitHub protections:
+
 - Secret scanning (blocks commits with secrets)
 - Dependabot alerts
 - GitHub Actions security scanning
