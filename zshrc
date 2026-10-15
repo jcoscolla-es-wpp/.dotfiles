@@ -32,6 +32,7 @@ source "${ZSH_CONFIG_DIR}/alias.zsh"      # Custom aliases
 source "${ZSH_CONFIG_DIR}/tools.zsh"      # Tool integrations
 source "${ZSH_CONFIG_DIR}/oracle.zsh"     # Oracle Config
 source "${ZSH_CONFIG_DIR}/aws.zsh"        # AWS helpers
+source "${ZSH_CONFIG_DIR}/github.zsh"     # GitHub helpers
 
 # direnv hook (deferred to not block startup)
 if command -v direnv &>/dev/null; then
