@@ -31,8 +31,8 @@ source "${ZSH_CONFIG_DIR}/kitty.zsh"      # Kitty terminal integration
 source "${ZSH_CONFIG_DIR}/alias.zsh"      # Custom aliases
 source "${ZSH_CONFIG_DIR}/tools.zsh"      # Tool integrations
 
-# Optional modules: aws and github are generic, oracle is local-only (untracked)
-for _module in oracle aws github; do
+# Optional modules: aws is generic, oracle is local-only (untracked)
+for _module in oracle aws; do
   [[ -r "${ZSH_CONFIG_DIR}/${_module}.zsh" ]] && source "${ZSH_CONFIG_DIR}/${_module}.zsh"
 done
 unset _module

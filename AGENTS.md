@@ -53,12 +53,10 @@ Use `make profile` to relink configs. Do not run `make all` when it is not neede
 OpenCode V2 does not inject rule contents. Read the relevant file before changing
 code, from `~/.config/opencode/rules/`:
 
-- ZSH modules, prompt, startup: `stacks/zsh.rule.md`, `stacks/shell.rule.md`
+- ZSH config, scripts, prompt, startup: `stacks/zsh.rule.md`
 - Markdown: `stacks/markdown.rule.md`
 - Git: `stacks/github.rule.md`
 - Tmux, Neovim, Makefile: `stacks/tmux.rule.md`, `stacks/neovim.rule.md`, `stacks/makefile.rule.md`
-
-Where a rule says "ZSH/Bash", this file wins: zsh only.
 
 ## ZSH Loading Order
 
@@ -74,7 +72,6 @@ Optional modules load afterwards, only when the file exists:
 | Module | Status | Purpose |
 |--------|--------|---------|
 | `aws.zsh` | Tracked, generic | `awscost`: month-to-date AWS cost |
-| `github.zsh` | Tracked, generic | `ghcost`: month-to-date Copilot cost |
 | `oracle.zsh` | Local, untracked (`.gitignore`) | Machine-specific Oracle client paths |
 
 Place new code in the module that owns it: PATH and variables in `env.zsh`,
