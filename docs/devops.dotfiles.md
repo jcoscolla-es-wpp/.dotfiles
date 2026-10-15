@@ -14,12 +14,14 @@ All configs validated automatically on push/PR.
 ## What Gets Validated
 
 **validate.yml (Ubuntu):**
+
 - ShellCheck on `scripts/`
 - ZSH syntax: `zsh -n` on zshrc + all `zsh.d/` modules
 - Tmux syntax: `tmux source-file tmux.conf`
 - Markdown linting
 
 **validate-macos.yml (macOS):**
+
 - Install tools: brew + mise
 - Symlink configs
 - ZSH startup time (threshold: 500ms, typically 47ms)
@@ -29,6 +31,7 @@ All configs validated automatically on push/PR.
 - mise doctor
 
 **security.yml (Ubuntu):**
+
 - Gitleaks: scan git history for secrets
 - Trivy: detect security misconfigs
 

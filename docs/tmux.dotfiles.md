@@ -54,11 +54,13 @@ Theme: TokyoNight Night. Prefix: `C-a` (GNU Screen style).
 ## Clipboard Design
 
 No plugins. Native `pbcopy` integration:
+
 - `y` in copy mode pipes directly to `pbcopy`
 - Mouse drag/double-click also use `pbcopy`
 - Right-click pastes via `pbpaste`
 
 Troubleshoot:
+
 ```bash
 tmux list-keys -T copy-mode-vi | grep "y send"
 tmux show -g mouse

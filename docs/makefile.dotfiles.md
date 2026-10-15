@@ -12,6 +12,7 @@ check-xcode → brew → mise → profile → tools → kitty
 ```
 
 Where:
+
 - `profile` = zsh + neovim + tmux + git
 - `tools` = CLI utilities + runtimes (Node.js, Go, Ruby, Terraform, Kubernetes)
 

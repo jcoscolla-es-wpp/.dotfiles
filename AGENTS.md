@@ -50,12 +50,14 @@ Skills are configured globally in `~/.config/opencode/skills/`:
 All project standards and best practices are defined in `~/.config/opencode/rules/`:
 
 **Universal Rules:**
+
 - `communication.rule.md` — English-only, concise, no filler
 - `code-quality.rule.md` — DRY, KISS, SOLID principles
 - `safety.rule.md` — Non-destructive, research-first
 - `reporting.rule.md` — Clear findings, actionable recommendations
 
 **Stack Rules:**
+
 - `shell.rule.md` — Shell scripting, ZSH setup, environment configuration
 - `github.rule.md` — Git workflow, conventional commits, co-author requirement
 - `opencode.rule.md` — OpenCode configuration, permissions, agent usage
@@ -179,6 +181,7 @@ Customize by editing `PROMPT_*` variables at the top of `zsh.d/prompt.zsh` direc
 Tmux auto-starts in login shells with a TTY (not in non-interactive shells or IDEs). This prevents unexpected terminal multiplexing in environments like VS Code or Claude Code.
 
 **Guard in zshrc:**
+
 ```bash
 if [[ -z "$TMUX" ]] && [[ -o login ]] && [[ -t 0 ]]; then
   exec tmux new-session -A -s main
@@ -215,6 +218,7 @@ These are untracked local-only configs. Agents may encounter them but **should n
 - Any future `*.zsh` files in `zsh.d/` not committed to repo
 
 **How to add local config safely:**
+
 ```bash
 # 1. Create new module in zsh.d/
 echo "# My local config" > zsh.d/mylocal.zsh
@@ -297,6 +301,7 @@ Where `$DOTFILES` = `/Users/javiercoscolla/.dotfiles` (or `$(pwd)` from repo roo
 ## Branching & Contributing
 
 **Single-feature workflow:**
+
 - Work on feature branch (`feature/name`) or `develop`
 - Commit to feature branch with conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
 - Open PR: `feature/*` -> `develop` or `feature/*` -> `main`
@@ -305,12 +310,14 @@ Where `$DOTFILES` = `/Users/javiercoscolla/.dotfiles` (or `$(pwd)` from repo roo
 - Pre-commit hooks are enforced — fix issues and retry commit
 
 **Multi-feature coordination (if multiple in-flight):**
+
 - Don't merge feature branches directly to `main` if `develop` is ahead
 - Coordinate merge order: stabilize on `develop` first, then to `main`
 - Use descriptive PR titles and commit messages
 - Reference issues in commits: `fixes #123` auto-closes on merge
 
 **Commit requirements:**
+
 - **Co-author all commits** with: `Co-Authored-By: Roy Batty <roy.batty@cosckoya.bot>`
 - Message format: `type(scope): description` (e.g. `feat(zsh): add new plugin`)
 - No force-push, no `git reset --hard`, no squashing after merge
