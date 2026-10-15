@@ -80,7 +80,7 @@ source ~/.zshrc
 ├── kitty.conf                  # Kitty → ~/.config/kitty/kitty.conf
 ├── gitignore_global            # Global gitignore → ~/.gitignore_global
 ├── scripts/
-│   └── validate-configs.sh    # Validates tmux syntax, ZSH modules, clipboard
+│   └── validate-configs.zsh    # Validates tmux syntax, ZSH modules, clipboard
 └── docs/                       # Per-technology reference docs
 ```
 
@@ -102,7 +102,7 @@ make clean      # Remove all symlinks
 ### Validate after changes
 
 ```bash
-bash scripts/validate-configs.sh   # tmux syntax, ZSH modules, clipboard
+zsh scripts/validate-configs.zsh   # tmux syntax, ZSH modules, clipboard
 make verify                        # System prerequisites check
 ```
 

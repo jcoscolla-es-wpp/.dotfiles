@@ -55,7 +55,7 @@ All commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 Always run locally first:
 
 ```bash
-bash scripts/validate-configs.sh    # Full validation
+zsh scripts/validate-configs.zsh    # Full validation
 make verify                         # System check
 ```
 

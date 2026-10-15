@@ -66,7 +66,7 @@ gh pr merge <#> --squash --delete-branch
 If workflows fail, debug locally:
 
 ```bash
-bash scripts/validate-configs.sh    # All checks
+zsh scripts/validate-configs.zsh    # All checks
 make verify                         # System prereqs
 zsh -n zshrc                        # ZSH syntax
 for f in zsh.d/*.zsh; do zsh -n "$f"; done  # Modules

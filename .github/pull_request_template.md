@@ -16,4 +16,4 @@
 - [ ] `tmux source-file` succeeds if `tmux.conf` changed
 - [ ] No secrets, credentials, or API keys in any tracked file
 - [ ] `make verify` passes locally
-- [ ] `scripts/validate-configs.sh` passes
+- [ ] `scripts/validate-configs.zsh` passes

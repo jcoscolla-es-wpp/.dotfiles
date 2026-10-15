@@ -114,7 +114,7 @@ Personal dotfiles quick lookup table. For detailed info, see individual docs.
 | **Update Neovim plugins** | `nvim +"Lazy sync" +qa` |
 | **Update all tools** | `make update` |
 | **Profile ZSH startup** | `time zsh -i -c exit` |
-| **Validate configs** | `bash scripts/validate-configs.sh` |
+| **Validate configs** | `zsh scripts/validate-configs.zsh` |
 
 ---
 
@@ -170,7 +170,7 @@ All configs are symlinked from repo into home directory. **Edit in repo, not hom
 Run before opening PR:
 
 ```bash
-bash scripts/validate-configs.sh    # All checks
+zsh scripts/validate-configs.zsh    # All checks
 make verify                         # System prereqs
 zsh -n zshrc                        # ZSH syntax
 for f in zsh.d/*.zsh; do zsh -n "$f"; done  # All modules
@@ -187,7 +187,7 @@ tmux source-file ~/.tmux.conf       # Tmux syntax
 | **Tmux clipboard broken** | `tmux list-keys -T copy-mode-vi \| grep "y send"` |
 | **Neovim LSP not working** | `:Mason` (install servers), `:LspInfo` (check status) |
 | **Kitty config not loading** | `kitty --check-config`, `cmd+shift+,` to reload |
-| **Git workflow failing** | Run `bash scripts/validate-configs.sh` locally first |
+| **Git workflow failing** | Run `zsh scripts/validate-configs.zsh` locally first |
 
 ---
 

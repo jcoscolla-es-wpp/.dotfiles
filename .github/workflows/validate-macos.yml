@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "Checking zshrc..."
           zsh -n "$HOME/.zshrc"
-          echo "Checking 11 modules in zsh.d/..."
+          echo "Checking all modules in zsh.d/..."
           failed=0
           for f in zsh.d/*.zsh; do
             if zsh -n "$f" 2>/dev/null; then
@@ -137,7 +137,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tool | Check |" >> "$GITHUB_STEP_SUMMARY"
           echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| ZSH | Syntax (zshrc + 11 modules) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ZSH | Syntax (zshrc + zsh.d modules) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| ZSH | Startup time (mean: ${STARTUP_MEAN:-n/a}ms, threshold 500ms) |" >> "$GITHUB_STEP_SUMMARY"
           echo "| TMUX | \`tmux source-file\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Kitty | \`kitty --check-config\` |" >> "$GITHUB_STEP_SUMMARY"
