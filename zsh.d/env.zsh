@@ -27,6 +27,7 @@ export INFOPATH="$HOMEBREW_PREFIX/share/info${INFOPATH+:$INFOPATH}"
 
 # Add directories to PATH (ordered by priority)
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
 
 # Locale configuration (UTF-8 support)
 export LANG=en_US.UTF-8
