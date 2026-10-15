@@ -40,9 +40,4 @@ zstyle ':completion:*:make:*' tag-order targets
 # Process completion
 zstyle ':completion:*:*:kill:*' menu yes select
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
-zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
-
-# Kubectl prompt configuration (if using k8s)
-if [[ -d $HOME/.kube ]]; then
-  zstyle ':zsh-kubectl-prompt:' separator '|'
-fi
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,comm'

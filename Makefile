@@ -5,7 +5,7 @@
 # Make Configuration
 # =============================================================================
 .ONESHELL:
-SHELL := /bin/bash
+SHELL := /bin/zsh
 .SHELLFLAGS := -e -u -o pipefail -c
 .DELETE_ON_ERROR:
 MAKEFLAGS += --warn-undefined-variables
@@ -140,6 +140,7 @@ all: check-xcode brew mise profile tools kitty ## Install all components (full s
 	@echo "  3. Run 'nvim' to complete plugin installation"
 	@echo ""
 
+# The upstream Homebrew installer requires bash; it is the only bash use here
 brew: check-xcode ## Install Homebrew package manager
 	@echo "$(BOLD)Checking Homebrew installation...$(RESET)"
 	@if ! command -v brew >/dev/null 2>&1; then \

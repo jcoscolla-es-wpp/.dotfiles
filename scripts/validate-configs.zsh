@@ -1,57 +1,42 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Configuration validation script for tmux and zsh
 # Validates syntax and configuration integrity
 # Used by pre-commit hook
 
-set -euo pipefail
+setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+NC=$'\033[0m'
 
-ERRORS=0
-WARNINGS=0
+integer ERRORS=0 WARNINGS=0
 
-# Function to print colored output
 print_status() {
-  local status=$1
-  local message=$2
-  case $status in
-    error)
-      echo -e "${RED}✗ ERROR${NC}: $message"
-      (( ERRORS += 1 ))
-      ;;
-    warn)
-      echo -e "${YELLOW}⚠ WARN${NC}: $message"
-      (( WARNINGS += 1 ))
-      ;;
-    ok)
-      echo -e "${GREEN}✓ OK${NC}: $message"
-      ;;
+  local level=$1 message=$2
+  case $level in
+    error) print -r -- "${RED}✗ ERROR${NC}: $message"; (( ERRORS += 1 )) ;;
+    warn)  print -r -- "${YELLOW}⚠ WARN${NC}: $message"; (( WARNINGS += 1 )) ;;
+    ok)    print -r -- "${GREEN}✓ OK${NC}: $message" ;;
   esac
 }
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
+DOTFILES_DIR="${0:A:h:h}"
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Configuration Validation"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print "Configuration Validation"
+print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ============================================================================
 # TMUX CONFIGURATION VALIDATION
 # ============================================================================
-echo -e "\n${YELLOW}[TMUX Configuration]${NC}"
+print -r -- $'\n'"${YELLOW}[TMUX Configuration]${NC}"
 
 TMUX_CONFIG="$DOTFILES_DIR/tmux.conf"
-if [[ ! -f "$TMUX_CONFIG" ]]; then
+if [[ ! -f $TMUX_CONFIG ]]; then
   print_status error "tmux.conf not found at $TMUX_CONFIG"
 else
-  # Check tmux syntax
-  if command -v tmux &>/dev/null; then
+  if (( $+commands[tmux] )); then
     if tmux source-file -v "$TMUX_CONFIG" &>/dev/null; then
       print_status ok "tmux configuration syntax is valid"
     else
@@ -62,7 +47,6 @@ else
     print_status warn "tmux not installed, skipping syntax check"
   fi
 
-  # Check for critical bindings
   if grep -q "copy-pipe-and-cancel.*pbcopy" "$TMUX_CONFIG"; then
     print_status ok "Copy to clipboard binding found"
   else
@@ -81,94 +65,72 @@ else
     print_status error "Missing pbpaste binding"
   fi
 
-  # Check for plugin conflicts
   if grep -q "tmux-yank" "$TMUX_CONFIG" && ! grep -q "^# REMOVED.*tmux-yank" "$TMUX_CONFIG"; then
     print_status warn "tmux-yank plugin may conflict with native pbcopy bindings"
   else
     print_status ok "No tmux-yank plugin conflict detected"
   fi
 
-  # Check for mouse support
   if grep -q "set -g mouse on" "$TMUX_CONFIG"; then
     print_status ok "Mouse support enabled"
   else
     print_status warn "Mouse support not enabled"
   fi
 
-  # Check for copy mode key bindings
   if grep -q "bind -T copy-mode-vi MouseDragEnd1Pane" "$TMUX_CONFIG"; then
     print_status ok "Mouse drag-end copy binding found"
   else
     print_status error "Missing mouse drag-end binding"
   fi
-
 fi
 
 # ============================================================================
 # ZSH CONFIGURATION VALIDATION
 # ============================================================================
-echo -e "\n${YELLOW}[ZSH Configuration]${NC}"
+print -r -- $'\n'"${YELLOW}[ZSH Configuration]${NC}"
 
 ZSH_CONFIG="$DOTFILES_DIR/zshrc"
-if [[ ! -f "$ZSH_CONFIG" ]]; then
+if [[ ! -f $ZSH_CONFIG ]]; then
   print_status error "zshrc not found at $ZSH_CONFIG"
 else
-  # Check zshrc syntax
-  if command -v zsh &>/dev/null; then
-    if zsh -n "$ZSH_CONFIG" 2>/dev/null; then
-      print_status ok "zshrc syntax is valid"
-    else
-      print_status error "zshrc has syntax errors"
-      zsh -n "$ZSH_CONFIG" 2>&1 | head -10
-    fi
+  if zsh -n "$ZSH_CONFIG" 2>/dev/null; then
+    print_status ok "zshrc syntax is valid"
   else
-    print_status warn "zsh not installed, skipping syntax check"
+    print_status error "zshrc has syntax errors"
+    zsh -n "$ZSH_CONFIG" 2>&1 | head -10
   fi
 
-  # Check for required sources (supports both zsh.d and $ZSH_CONFIG_DIR)
   if grep -q 'source.*\.d/' "$ZSH_CONFIG" || grep -q 'source.*ZSH_CONFIG_DIR' "$ZSH_CONFIG"; then
     print_status ok "zsh.d modular sources found"
   else
     print_status error "Missing zsh.d module sources"
   fi
-
 fi
 
 # ============================================================================
 # ZSH MODULES VALIDATION
 # ============================================================================
-echo -e "\n${YELLOW}[ZSH Modules]${NC}"
+print -r -- $'\n'"${YELLOW}[ZSH Modules]${NC}"
 
 ZSH_D_DIR="$DOTFILES_DIR/zsh.d"
-if [[ ! -d "$ZSH_D_DIR" ]]; then
+if [[ ! -d $ZSH_D_DIR ]]; then
   print_status error "zsh.d directory not found"
 else
-  REQUIRED_MODULES=(
-    "env.zsh"
-    "options.zsh"
-    "history.zsh"
-    "plugins.zsh"
-    "prompt.zsh"
-    "completion.zsh"
-    "colors.zsh"
-    "kitty.zsh"
-    "alias.zsh"
-    "tools.zsh"
-  )
+  # Core modules must exist; optional modules (aws, github, oracle) are
+  # syntax-checked only when present
+  REQUIRED_MODULES=(env options history plugins prompt completion colors kitty alias tools)
 
-  for module in "${REQUIRED_MODULES[@]}"; do
-    MODULE_PATH="$ZSH_D_DIR/$module"
-    if [[ ! -f "$MODULE_PATH" ]]; then
-      print_status error "Missing required module: $module"
+  for module in $REQUIRED_MODULES; do
+    if [[ ! -f $ZSH_D_DIR/$module.zsh ]]; then
+      print_status error "Missing required module: $module.zsh"
+    fi
+  done
+
+  for module_path in $ZSH_D_DIR/*.zsh(N); do
+    if zsh -n "$module_path" 2>/dev/null; then
+      print_status ok "${module_path:t} syntax valid"
     else
-      # Basic syntax check
-      if command -v zsh &>/dev/null; then
-        if zsh -n "$MODULE_PATH" 2>/dev/null; then
-          print_status ok "$module syntax valid"
-        else
-          print_status error "$module has syntax errors"
-        fi
-      fi
+      print_status error "${module_path:t} has syntax errors"
     fi
   done
 fi
@@ -176,12 +138,11 @@ fi
 # ============================================================================
 # CLIPBOARD FUNCTIONALITY TESTS
 # ============================================================================
-echo -e "\n${YELLOW}[Clipboard Functionality]${NC}"
+print -r -- $'\n'"${YELLOW}[Clipboard Functionality]${NC}"
 
-# Test pbcopy/pbpaste
-if command -v pbcopy &>/dev/null && command -v pbpaste &>/dev/null; then
+if (( $+commands[pbcopy] && $+commands[pbpaste] )); then
   TEST_TEXT="clipboard_test_$(date +%s)"
-  if echo "$TEST_TEXT" | pbcopy && pbpaste | grep -q "$TEST_TEXT"; then
+  if print -r -- "$TEST_TEXT" | pbcopy && pbpaste | grep -q "$TEST_TEXT"; then
     print_status ok "pbcopy/pbpaste working correctly"
   else
     print_status error "pbcopy/pbpaste test failed"
@@ -190,11 +151,8 @@ else
   print_status error "pbcopy/pbpaste commands not found"
 fi
 
-# Test tmux clipboard integration if tmux is running
-if command -v tmux &>/dev/null; then
-  # Check if we can create a test session
+if (( $+commands[tmux] )); then
   if tmux new-session -d -s config_test_$$ 2>/dev/null; then
-    # Test save-buffer
     tmux send-keys -t config_test_$$ "echo 'tmux_clipboard_test'" Enter
     sleep 0.5
     if tmux save-buffer - 2>/dev/null | grep -q tmux_clipboard; then
@@ -209,7 +167,7 @@ fi
 # ============================================================================
 # ENVIRONMENT VARIABLES
 # ============================================================================
-echo -e "\n${YELLOW}[Environment Variables]${NC}"
+print -r -- $'\n'"${YELLOW}[Environment Variables]${NC}"
 
 ZSH_ENV="$ZSH_D_DIR/env.zsh"
 if grep -q "export HOMEBREW_PREFIX" "$ZSH_ENV"; then
@@ -218,7 +176,7 @@ else
   print_status error "Missing HOMEBREW_PREFIX export"
 fi
 
-if grep -q "export EDITOR=" "$ZSH_ENV" || grep -q "export EDITOR=" "$DOTFILES_DIR/zsh.d"/*.zsh; then
+if grep -q "export EDITOR=" "$ZSH_ENV" || grep -q "export EDITOR=" "$ZSH_D_DIR"/*.zsh; then
   print_status ok "EDITOR environment variable configured"
 else
   print_status error "EDITOR environment variable not configured"
@@ -227,20 +185,18 @@ fi
 # ============================================================================
 # SUMMARY
 # ============================================================================
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Validation Summary"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "Errors:   ${RED}$ERRORS${NC}"
-echo -e "Warnings: ${YELLOW}$WARNINGS${NC}"
+print ""
+print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print "Validation Summary"
+print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print -r -- "Errors:   ${RED}$ERRORS${NC}"
+print -r -- "Warnings: ${YELLOW}$WARNINGS${NC}"
 
-if [[ $ERRORS -eq 0 ]]; then
-  echo -e "${GREEN}✓ All validations passed!${NC}"
-  if [[ $WARNINGS -gt 0 ]]; then
-    echo -e "${YELLOW}⚠ ($WARNINGS warning(s) - not blocking)${NC}"
-  fi
+if (( ERRORS == 0 )); then
+  print -r -- "${GREEN}✓ All validations passed!${NC}"
+  (( WARNINGS > 0 )) && print -r -- "${YELLOW}⚠ ($WARNINGS warning(s) - not blocking)${NC}"
   exit 0
 else
-  echo -e "${RED}✗ Validation failed with $ERRORS error(s)${NC}"
+  print -r -- "${RED}✗ Validation failed with $ERRORS error(s)${NC}"
   exit 1
 fi

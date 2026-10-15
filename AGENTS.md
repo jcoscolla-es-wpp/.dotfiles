@@ -1,325 +1,129 @@
 # AGENTS.md
 
-Agent-focused guidance for working in this macOS dotfiles repository. Every entry answers: "Would an agent likely miss this?"
+Agent guidance for this macOS dotfiles repository.
+The global `~/.config/opencode/AGENTS.md` also applies: it governs safety, Git
+workflow, permissions, and models. This file adds only project-specific rules.
 
-## OpenCode Integration
-
-This project uses **OpenCode global configuration** from `~/.config/opencode/`.
-
-### Quick Start with OpenCode
-
-```bash
-# Invoke agents (all globally configured)
-@shadow-architect audit this repository
-@shadow-architect review the ZSH configuration
-
-# Load skills relevant to this project
-@shadow-architect /skill load makefile-targets
-@shadow-architect /skill load zsh-modules
-
-# Invoke specialized agents
-@rankle audit for security vulnerabilities
-@atticus audit README.md for Diátaxis compliance
-@daedalus review the Makefile for best practices
-```
-
-### Available Agents (Global)
-
-All agents are configured in `~/.config/opencode/agents/`:
-
-- **shadow-architect** — Meta-orchestrator, defines standards, coordinates work
-- **rankle** — Purple Team lead, orchestrates security assessments
-- **puck** — Defensive security executor (scans, audits, hardening)
-- **shadow** — Offensive security executor (exploitation, PoCs)
-- **daedalus** — Infrastructure/IaC architect (Terraform, DevSecOps)
-- **atticus** — Documentation architect (Markdown, Diátaxis, style)
-
-### Available Skills (Relevant to This Project)
-
-Skills are configured globally in `~/.config/opencode/skills/`:
-
-- **makefile-targets** — Quick reference of all Makefile targets
-- **neovim-setup** — Neovim plugin configuration guide
-- **tmux-config** — Tmux keybindings and configuration guide
-- **zsh-modules** — ZSH module loading order guide
-
-**Note:** Detailed knowledge is in rules (loaded automatically). Skills are quick references only.
-
-### Available Rules (Always Loaded)
-
-All project standards and best practices are defined in `~/.config/opencode/rules/`:
-
-**Universal Rules:**
-
-- `communication.rule.md` — English-only, concise, no filler
-- `code-quality.rule.md` — DRY, KISS, SOLID principles
-- `safety.rule.md` — Non-destructive, research-first
-- `reporting.rule.md` — Clear findings, actionable recommendations
-
-**Stack Rules:**
-
-- `shell.rule.md` — Shell scripting, ZSH setup, environment configuration
-- `github.rule.md` — Git workflow, conventional commits, co-author requirement
-- `opencode.rule.md` — OpenCode configuration, permissions, agent usage
-- `makefile.rule.md` — Makefile targets, installation order, idempotency
-- `neovim.rule.md` — Neovim configuration, lazy.nvim, LSP setup
-- `tmux.rule.md` — Tmux configuration, keybindings, clipboard integration
-- `zsh.rule.md` — ZSH modules, loading order, plugin management
-
-### OpenCode Configuration
-
-- **Global config:** `~/.config/opencode/opencode.json`
-- **Project context:** This `AGENTS.md` file (loaded automatically)
-- **No local config:** This project uses global OpenCode configuration only
-
-### Key Principle
-
-**Read AGENTS.md first.** It's the source of truth for project-specific guidance and constraints. OpenCode loads this file as an instruction when working in this project.
-
----
+**Last Updated:** 2026-10-15
 
 ## What This Repo Is
 
-Personal macOS development dotfiles. All components symlink into `~/.zshrc`, `~/.zsh.d/`, `~/.config/nvim/`, `~/.tmux.conf`, and `~/.config/kitty/`. macOS-only. Single source of truth is `Makefile`.
+Personal macOS dotfiles. Files are symlinked from the repo into the home directory,
+so edit them here, never under `~`.
 
-## Critical Commands (Agents Often Miss)
+| Repo path | Symlinked to |
+|-----------|--------------|
+| `zshrc` | `~/.zshrc` |
+| `zsh.d/` | `~/.zsh.d/` |
+| `nvim/` | `~/.config/nvim/` |
+| `tmux.conf` | `~/.tmux.conf` |
+| `kitty.conf` | `~/.config/kitty/kitty.conf` |
+| `gitignore_global` | `~/.gitignore_global` |
 
-```bash
-make verify              # ALWAYS run before editing config — checks deps and system state
-make all                 # Full install: Xcode -> Homebrew -> mise -> profile -> tools -> Kitty
-make profile             # Symlink only (zsh, neovim, tmux, git) — faster than `make all`
-bash scripts/validate-configs.sh  # Validates tmux syntax, ZSH modules, clipboard
+`Makefile` is the single installer. `$DOTFILES` is `/Users/javiercoscolla/.dotfiles`.
 
-# After edits, reload without re-running install:
-source ~/.zshrc
-tmux source-file ~/.tmux.conf
-nvim +"Lazy sync" +qa
+## Shell Policy: zsh Only
+
+Write every script, hook, and snippet in zsh (`#!/usr/bin/env zsh`, `.zsh` extension).
+Do not write bash. The only exception is the upstream Homebrew installer in the
+`Makefile`, which requires bash. The `Makefile` itself runs with `SHELL := /bin/zsh`.
+
+ShellCheck does not understand zsh, so `.zsh` files are excluded from it in
+`.pre-commit-config.yaml` and the CI ShellCheck job.
+
+## Verify Before Committing
+
+OpenCode V2 does not run language servers, so verification is command-based.
+
+```zsh
+zsh scripts/validate-configs.zsh   # tmux syntax, all zsh modules, clipboard
+zsh -n zsh.d/<module>.zsh          # syntax of one module
+make verify                        # system dependencies
+time zsh -ic exit                  # startup; target is under 110 ms
 ```
 
-**Why:** Agents often re-run full installs when `make profile` suffices. Config validation is critical before committing.
+Pre-commit runs the same checks plus Markdownlint, YAMLLint, Typos, and Gitleaks.
+Test prompt changes in a real pty (`script -q /dev/null zsh -ic '...'`);
+gitstatus cannot start without a TTY.
 
-## Installation Order Matters
+Use `make profile` to relink configs. Do not run `make all` when it is not needed.
 
-`make all` chains these targets in order. Each is idempotent but order is enforced:
+## Rules to Read
 
-1. `check-xcode` -> Xcode CLT (blocking dialog may appear)
-2. `brew` -> Homebrew
-3. `mise` -> Version manager (modern ASDF replacement)
-4. `profile` -> Symlink configs
-5. `tools` -> CLI utilities (bat, lsd, fd, ripgrep, fzf, zoxide, etc.)
-6. `kitty` -> Kitty terminal + JetBrains Mono
+OpenCode V2 does not inject rule contents. Read the relevant file before changing
+code, from `~/.config/opencode/rules/`:
 
-**Why:** Later stages depend on earlier stages being present. Do not skip or reorder.
+- ZSH modules, prompt, startup: `stacks/zsh.rule.md`, `stacks/shell.rule.md`
+- Markdown: `stacks/markdown.rule.md`
+- Git: `stacks/github.rule.md`
+- Tmux, Neovim, Makefile: `stacks/tmux.rule.md`, `stacks/neovim.rule.md`, `stacks/makefile.rule.md`
 
-## Configuration Validation is Strict
+Where a rule says "ZSH/Bash", this file wins: zsh only.
 
-Pre-commit hooks (`.pre-commit-config.yaml`) block commits on:
+## ZSH Loading Order
 
-- ShellCheck on `.sh` files (but **ZSH modules in `zsh.d/` are excluded** — they're sourced, not executed)
-- Syntax validation via `scripts/validate-configs.sh` on `tmux.conf`, `zshrc`, `zsh.d/*.zsh`
-- YAMLLint, Markdownlint, Typos, Gitleaks
-
-**Why:** Broken config files break the entire environment. Agents must validate before committing.
-
-## ZSH Loading Order is Strict
-
-`zshrc` is the entry point. It auto-starts tmux (login shells only with TTY), bootstraps Zinit, then sources 10 core modules from `~/.zsh.d/` in this exact order:
+`zshrc` starts tmux (login shells with a TTY only), bootstraps Zinit, then sources
+the core modules from `~/.zsh.d/` in this exact order. Never reorder them.
 
 ```text
-env.zsh -> options.zsh -> history.zsh -> plugins.zsh -> prompt.zsh →
-completion.zsh -> colors.zsh -> kitty.zsh -> alias.zsh -> tools.zsh
+env -> options -> history -> plugins -> prompt -> completion -> colors -> kitty -> alias -> tools
 ```
 
-**Note:** `oracle.zsh` (user-specific Oracle DB config) is optional and untracked — see **Optional Local Modules** section below.
-
-**Critical:** `tools.zsh` is the integration hub (mise, fzf, bat config, zoxide). Changes here affect everything downstream.
-
-**Why:** Out-of-order sourcing breaks PATH, aliases, and shell features. Agents often edit the wrong module or insert code in the wrong place.
-
-## Repository Structure & Ownership
-
-| Path | Purpose | Never Delete |
-|------|---------|--------------|
-| `zshrc` | Entry point -> `~/.zshrc` | **YES** |
-| `zsh.d/` | 10 core modular config files | **YES** — all 10 required |
-| `nvim/` | Neovim config -> `~/.config/nvim/` | YES |
-| `tmux.conf` | Tmux config -> `~/.tmux.conf` | YES |
-| `kitty.conf` | Kitty config -> `~/.config/kitty/` | YES |
-| `gitignore_global` | Global gitignore -> `~/.gitignore_global` | YES |
-| `Makefile` | Installer & orchestrator | YES |
-| `.pre-commit-config.yaml` | Git hooks | YES |
-| `scripts/validate-configs.sh` | Config validation | YES |
-| `AGENTS.md` | OpenCode project context | **YES** |
-| `docs/*.dotfiles.md` | Reference docs (per-technology) | NO — reference only |
-
-**Why:** Agents might accidentally delete or skip critical modules, breaking the entire system.
-
-## Quirks That Will Trip Agents
-
-### 1. Tmux Supports `C-a` as Primary Prefix (GNU Screen-compatible)
-
-Primary prefix is `C-a` (not default `C-b`). Set as `prefix` and `prefix2` for GNU Screen compatibility. Code uses `bind C-a` to support this. All custom bindings should respect this dual-prefix setup.
-
-### 2. Tmux Has Native `pbcopy`/`pbpaste`, No tmux-yank
-
-Copy-mode-vi `y` pipes directly to `pbcopy`. Mouse drag/triple-click also use `pbcopy`. Do not add `tmux-yank` plugin — it conflicts.
-
-### 3. `ls` Uses Native `/bin/ls -G`, Not `lsd`
-
-Native `ls` avoids iCloud/network file timeout issues (`os error 60`). `lsd` available explicitly via `lsl` / `lsll` / `lslt` aliases when safe.
-
-### 4. Prompt Uses `gitstatus`, Not vcs_info
-
-`prompt.zsh` uses **gitstatus** for ~47ms git status (not vcs_info). Falls back to vcs_info if gitstatus unavailable. Fast startup critical.
-
-### 5. Prompt is Parametrized, Not Templated
-
-Customize by editing `PROMPT_*` variables at the top of `zsh.d/prompt.zsh` directly. No separate config file exists.
-
-### 6. Tmux Auto-Start in Login Shells Only
-
-Tmux auto-starts in login shells with a TTY (not in non-interactive shells or IDEs). This prevents unexpected terminal multiplexing in environments like VS Code or Claude Code.
-
-**Guard in zshrc:**
-
-```bash
-if [[ -z "$TMUX" ]] && [[ -o login ]] && [[ -t 0 ]]; then
-  exec tmux new-session -A -s main
-fi
-```
-
-**Why:** Simplified startup logic; IDE-specific handling deferred to environment configuration.
-
-### 7. Version Manager: mise (Not ASDF)
-
-Uses `mise` (modern ASDF replacement). Makefile has `mise use --global <tool>@latest`. Language versions: Node.js (LTS even-numbered), Go, Ruby, Terraform.
-
-**Why:** Agents unfamiliar with mise might call ASDF commands. Agents might add `tmux-yank` or change `ls` alias. Agents might edit the wrong prompt variables.
-
-## Sensitive Configuration Files
-
-Files in `.gitignore` — never create, edit, or commit these:
-
-| File | Purpose | Why Excluded |
-|------|---------|--------------|
-| `.env` | Environment variables with secrets | Contains sensitive credentials |
-| `secrets/` | Sensitive configuration files | Contains sensitive data |
-| `credentials/` | API keys and tokens | Contains sensitive data |
-
-These are intentionally excluded from version control. Agents should never write to them or attempt to commit them.
-
-**Note:** `claude.zsh` and `CLAUDE.md` have been removed. Use `.opencode/CLAUDE.md` for OpenCode integration guidance instead.
-
-## Optional Local Modules
-
-These are untracked local-only configs. Agents may encounter them but **should not commit**:
-
-- `zsh.d/oracle.zsh` — User-specific Oracle Database client paths (if developer uses Oracle SQL)
-- Any future `*.zsh` files in `zsh.d/` not committed to repo
-
-**How to add local config safely:**
-
-```bash
-# 1. Create new module in zsh.d/
-echo "# My local config" > zsh.d/mylocal.zsh
-
-# 2. Source it in zshrc after tools.zsh
-# (add: source "${ZSH_CONFIG_DIR}/mylocal.zsh")
-
-# 3. Add filename to .gitignore
-echo "zsh.d/mylocal.zsh" >> .gitignore
-
-# 4. Validate
-bash scripts/validate-configs.sh
-```
-
-**Why:** Keeps personal/environment-specific configs separate from tracked configurations.
-
-## Documentation Policy
-
-- `README.md`: Main docs (Quick Start, Tech Stack, Structure, Usage)
-- `docs/*.dotfiles.md`: Per-technology reference (zsh, tmux, neovim, kitty, makefile, mise, github)
-- `AGENTS.md`: Agent guidance and project constraints (source of truth)
-- **Never create other `.md` files** (reports, changelogs, analysis). Only edit these three locations.
-
-**Note:** OpenCode configuration is global (`~/.config/opencode/`). This project only maintains `AGENTS.md` as project-specific context.
-
-**Why:** Agents often create new markdown files instead of updating existing ones.
-
-## How to Verify Work
-
-After any change:
-
-```bash
-# 1. Validate syntax
-bash scripts/validate-configs.sh
-
-# 2. Verify system state
-make verify
-
-# 3. Test a focused component
-make zsh          # ZSH only
-make tmux         # Tmux only
-make neovim       # Neovim only
-
-# 4. Git hooks run automatically before commit
-git commit -m "your message"  # Blocks if validation fails
-```
-
-**Why:** Agents often skip validation or don't know what commands verify correctness.
-
-## Common Agent Mistakes
-
-1. **Editing wrong module** — Modifying `alias.zsh` when edit should be in `tools.zsh`
-2. **Reordering ZSH sources** — Breaks PATH and subsequent modules
-3. **Changing tmux prefix or removing pbcopy** — Breaks clipboard workflow
-4. **Adding `tmux-yank`** — Conflicts with native bindings
-5. **Editing `claude.zsh`** — Should never be committed (in .gitignore)
-6. **Creating new markdown docs** — Should update existing docs only
-7. **Running `make all` when `make profile` suffices** — Wastes time
-8. **Forgetting `make verify` before changes** — Detects prereq issues early
-9. **Not running validation before commit** — Pre-commit hooks catch later
-10. **Changing `ls` alias to `lsd`** — Causes network timeouts on iCloud
-
-**Why:** These are real mistakes found in version history and common in multi-session edits.
-
-## Symlink Model
-
-All config files are **symlinked from repo** into home directory:
-
-- `~/.zshrc` -> `$DOTFILES/zshrc`
-- `~/.zsh.d` -> `$DOTFILES/zsh.d`
-- `~/.config/nvim` -> `$DOTFILES/nvim`
-- `~/.tmux.conf` -> `$DOTFILES/tmux.conf`
-- `~/.config/kitty/kitty.conf` -> `$DOTFILES/kitty.conf`
-- `~/.gitignore_global` -> `$DOTFILES/gitignore_global`
-
-Where `$DOTFILES` = `/Users/javiercoscolla/.dotfiles` (or `$(pwd)` from repo root).
-
-**Why:** Agents should edit files in the repo, not the home directory. Editing `~/.zshrc` directly breaks the symlink.
-
-## Branching & Contributing
-
-**Single-feature workflow:**
-
-- Work on feature branch (`feature/name`) or `develop`
-- Commit to feature branch with conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
-- Open PR: `feature/*` -> `develop` or `feature/*` -> `main`
-- All changes must pass `make verify` and `bash scripts/validate-configs.sh`
-- Squash merge to target branch; auto-delete after merge
-- Pre-commit hooks are enforced — fix issues and retry commit
-
-**Multi-feature coordination (if multiple in-flight):**
-
-- Don't merge feature branches directly to `main` if `develop` is ahead
-- Coordinate merge order: stabilize on `develop` first, then to `main`
-- Use descriptive PR titles and commit messages
-- Reference issues in commits: `fixes #123` auto-closes on merge
-
-**Commit requirements:**
-
-- **Co-author all commits** with: `Co-Authored-By: Roy Batty <roy.batty@cosckoya.bot>`
-- Message format: `type(scope): description` (e.g. `feat(zsh): add new plugin`)
-- No force-push, no `git reset --hard`, no squashing after merge
-
-**Why:** Personal repo but CI/CD enforced. Agents need to know not to force-push or skip validation. Multi-feature coordination prevents merge conflicts and ensures stable main branch.
+Optional modules load afterwards, only when the file exists:
+
+| Module | Status | Purpose |
+|--------|--------|---------|
+| `aws.zsh` | Tracked, generic | `awscost`: month-to-date AWS cost |
+| `github.zsh` | Tracked, generic | `ghcost`: month-to-date Copilot cost |
+| `oracle.zsh` | Local, untracked (`.gitignore`) | Machine-specific Oracle client paths |
+
+Place new code in the module that owns it: PATH and variables in `env.zsh`,
+options in `options.zsh`, aliases in `alias.zsh`, tool integrations in `tools.zsh`.
+A new generic helper gets its own tracked module sourced from the optional loop in
+`zshrc`. Machine-specific config is local: add it to `.gitignore`.
+
+## Quirks That Break Things
+
+- **`ls` stays native** (`/bin/ls -G`). `lsd` is explicit via `lsl`, `lsll`, `lsla`,
+  `lslt`, because it times out on iCloud paths (`os error 60`).
+- **Tmux prefix is `C-a`** (also `prefix2`). Copy uses native `pbcopy`/`pbpaste`;
+  do not add `tmux-yank`.
+- **Prompt segments are built in a `precmd` hook** (`prompt.zsh`), never in `$(...)`:
+  a subshell loses caches and forks per prompt. Edit the `PROMPT_*` variables at the top.
+- **`TERM` is not forced.** Kitty integration keys off `KITTY_WINDOW_ID`.
+- **PATH is deduplicated** by `typeset -U path PATH` in `env.zsh`.
+- **mise replaces ASDF.** Use `mise use --global <tool>@latest`.
+- **Guard optional tools** with `command -v` and PATH entries with `[[ -d ]]`.
+- **Avoid zsh special names** in scripts: `status`, `path`, `commands`, `options`.
+
+## Never Commit
+
+- `.env`, `secrets/`, `credentials/`, `zsh.d/oracle.zsh`
+- OpenCode runtime directories and `service.json`, `cli.json`, `settings.json`
+
+## Documentation
+
+Edit existing files only: `README.md`, `docs/*.dotfiles.md`, and this file.
+Do not create reports, changelogs, or other Markdown files.
+
+## Git Workflow
+
+- Branches: only `main` and `develop`. No feature branches; never delete either.
+- Work on `develop`. Open a PR `develop` -> `main` and squash merge.
+- Refuse a squash merge from `develop` while GitHub "delete branch on merge" is on.
+  It was disabled on 2026-10-15; verify with
+  `gh repo view --json deleteBranchOnMerge`.
+- Conventional Commits with scope, for example `feat(zsh): add helper`.
+- Every commit carries `Co-Authored-By: Roy Batty <roy.batty@cosckoya.bot>`.
+- Never force-push or `git reset --hard`.
+- Remote is HTTPS: `https://github.com/jcoscolla-es-wpp/.dotfiles.git`.
+
+## Common Mistakes
+
+1. Reordering the `source` lines in `zshrc`.
+2. Editing `~/.zshrc` instead of the repo file, which breaks the symlink.
+3. Putting aliases in `tools.zsh` or integrations in `alias.zsh`.
+4. Computing prompt data inside `$(...)`.
+5. Writing a bash script, or adding a `.zsh` file to ShellCheck.
+6. Committing without running `zsh scripts/validate-configs.zsh`.
+7. Creating new Markdown files instead of editing the existing ones.

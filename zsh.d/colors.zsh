@@ -31,39 +31,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # g/G=cyan, h/H=light grey, x=default foreground/background
   # ============================================================================
 
-  # Choose your theme by uncommenting ONE of the following:
-
-  # Theme: TokyoNight (matches Kitty theme)
-  # Directories: Bold Cyan, Symlinks: Bold Magenta, Executables: Bold Green
+  # TokyoNight theme (matches Kitty); other themes live in git history
   export LSCOLORS=GxFxCxDxBxegedabagacad
 
-  # Theme: Dracula (matches Neovim theme)
-  # Directories: Bold Magenta, Symlinks: Bold Cyan, Executables: Bold Green
-  # export LSCOLORS=FxGxCxDxBxegedabagacad
-
-  # Theme: Nord
-  # Directories: Bold Blue, Symlinks: Bold Cyan, Executables: Bold Green
-  # export LSCOLORS=ExGxCxDxBxegedabagacad
-
-  # Theme: Gruvbox
-  # Directories: Bold Brown, Symlinks: Bold Cyan, Executables: Bold Green
-  # export LSCOLORS=DxGxCxDxBxegedabagacad
-
-  # Theme: Solarized
-  # Directories: Bold Blue, Symlinks: Bold Cyan, Executables: Bold Red
-  # export LSCOLORS=ExGxBxDxCxegedabagacad
-
-  # Theme: Default (original)
-  # export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
-
-  # If GNU coreutils are installed (brew install coreutils)
+  # GNU coreutils colors for completion (brew install coreutils); ls itself
+  # stays on native /bin/ls in alias.zsh to avoid iCloud timeouts
   if command -v gdircolors >/dev/null 2>&1; then
     if [[ -r ~/.dircolors ]]; then
       eval "$(gdircolors -b ~/.dircolors)"
     else
       eval "$(gdircolors -b)"
     fi
-    alias ls="gls --color=auto --group-directories-first"
     # shellcheck disable=SC2296
     zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
   fi
