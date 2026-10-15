@@ -1,6 +1,9 @@
 # Environment Variables and Paths
 # Loaded early in shell initialization
 
+# Keep PATH free of duplicates, including after `source ~/.zshrc`
+typeset -U path PATH
+
 # macOS specific environment
 export OSTYPE="${OSTYPE:-darwin}"
 
@@ -29,12 +32,10 @@ export INFOPATH="$HOMEBREW_PREFIX/share/info${INFOPATH+:$INFOPATH}"
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 [[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
 
-# Locale configuration (UTF-8 support)
+# Locale configuration (UTF-8 support); LC_ALL is left unset so LC_* overrides work
 export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
 
-# Terminal configuration
-export TERM="xterm-256color"
+# TERM is left to the terminal (xterm-kitty) and tmux (tmux-256color)
 export COLORTERM="truecolor"
 
 # Editor preferences

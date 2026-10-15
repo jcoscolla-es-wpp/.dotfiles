@@ -16,12 +16,6 @@ if command -v nvim &>/dev/null; then
   alias vim="nvim"
 fi
 
-# Docker Engine: Set the default platform
-# Documentation: https://docs.docker.com/
-if command -v docker &>/dev/null; then
-  export DOCKER_DEFAULT_PLATFORM="linux/amd64"
-fi
-
 # fzf - Fuzzy finder configuration
 # Documentation: https://github.com/junegunn/fzf
 # Note: fzf scripts are lazy-loaded via Zinit in plugins.zsh
@@ -56,6 +50,4 @@ fi
 # Documentation: https://github.com/ajeetdsouza/zoxide
 if command -v zoxide &>/dev/null; then
   eval "$(zoxide init zsh)"
-  # Optional: alias cd to z for seamless replacement
-  # alias cd="z"
 fi

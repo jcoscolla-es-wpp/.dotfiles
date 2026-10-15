@@ -1,11 +1,6 @@
 # ZSH Aliases Configuration
 # Optimized for macOS
 
-# Brew shortcuts
-if command -v brew &>/dev/null; then
-  alias brewup='brew update && brew upgrade && brew upgrade --greedy && brew cleanup -s && brew doctor && brew missing'
-fi
-
 # Docker/Podman container shortcuts
 if command -v docker &>/dev/null || command -v podman &>/dev/null; then
   alias kali='docker run --rm -ti kalilinux/kali-last-release bash'

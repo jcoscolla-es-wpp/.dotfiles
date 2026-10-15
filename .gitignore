@@ -38,6 +38,5 @@ credentials/
 # Pre-commit cache
 .pre-commit-cache/
 
-# Claude Code — local-only configuration (removed)
-# Note: claude.zsh was removed in commit b1df7e6
-# Use .opencode/CLAUDE.md for OpenCode integration guidance
+# Local-only zsh modules (machine-specific paths)
+zsh.d/oracle.zsh

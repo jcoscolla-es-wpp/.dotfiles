@@ -30,19 +30,16 @@ source "${ZSH_CONFIG_DIR}/colors.zsh"     # Color configuration
 source "${ZSH_CONFIG_DIR}/kitty.zsh"      # Kitty terminal integration
 source "${ZSH_CONFIG_DIR}/alias.zsh"      # Custom aliases
 source "${ZSH_CONFIG_DIR}/tools.zsh"      # Tool integrations
-source "${ZSH_CONFIG_DIR}/oracle.zsh"     # Oracle Config
-source "${ZSH_CONFIG_DIR}/aws.zsh"        # AWS helpers
-source "${ZSH_CONFIG_DIR}/github.zsh"     # GitHub helpers
 
-# direnv hook (deferred to not block startup)
+# Optional modules: aws and github are generic, oracle is local-only (untracked)
+for _module in oracle aws github; do
+  [[ -r "${ZSH_CONFIG_DIR}/${_module}.zsh" ]] && source "${ZSH_CONFIG_DIR}/${_module}.zsh"
+done
+unset _module
+
+# direnv hook: precmd also runs after every cd, so no chpwd hook is needed
 if command -v direnv &>/dev/null; then
   _direnv_hook() { eval "$(direnv export zsh)"; }
-  typeset -ag precmd_functions
-  if [[ -z "${precmd_functions[(r)_direnv_hook]}" ]]; then
-    precmd_functions=(_direnv_hook $precmd_functions)
-  fi
-  typeset -ag chpwd_functions
-  if [[ -z "${chpwd_functions[(r)_direnv_hook]}" ]]; then
-    chpwd_functions=(_direnv_hook $chpwd_functions)
-  fi
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd _direnv_hook
 fi

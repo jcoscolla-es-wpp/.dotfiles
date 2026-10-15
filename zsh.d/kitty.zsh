@@ -1,12 +1,8 @@
 # Kitty Terminal Integration
+# KITTY_WINDOW_ID survives tmux; TERM does not (tmux sets tmux-256color)
 
-if [[ "$TERM" == "xterm-kitty" ]]; then
-  # Kitty SSH integration
-  alias ssh="kitty +kitten ssh"
-
-  # Image viewing in terminal
-  alias icat="kitty +kitten icat"
-
-  # Diff with images support
-  alias d="kitty +kitten diff"
+if [[ -n "$KITTY_WINDOW_ID" ]] && command -v kitten &>/dev/null; then
+  alias ssh="kitten ssh"
+  alias icat="kitten icat"
+  alias d="kitten diff"
 fi

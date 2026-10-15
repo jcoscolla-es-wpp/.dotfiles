@@ -27,12 +27,6 @@ zinit light zdharma-continuum/fast-syntax-highlighting
 zinit ice wait'0' lucid
 zinit light zdharma-continuum/history-search-multi-word
 
-# Kubernetes prompt (only if kubectl exists)
-if command -v kubectl &>/dev/null; then
-  zinit ice wait'1' lucid
-  zinit light superbrothers/zsh-kubectl-prompt
-fi
-
 # fzf: Fuzzy finder (lazy-loaded for faster startup)
 # Load keybindings and completion scripts asynchronously
 if [[ -f "$HOMEBREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ]]; then
