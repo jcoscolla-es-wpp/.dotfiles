@@ -4,7 +4,7 @@ Agent guidance for this macOS dotfiles repository.
 The global `~/.config/opencode/AGENTS.md` also applies: it governs safety, Git
 workflow, permissions, and models. This file adds only project-specific rules.
 
-**Last Updated:** 2026-10-15
+**Last Updated:** 2026-11-06
 
 ## What This Repo Is
 
@@ -26,7 +26,8 @@ so edit them here, never under `~`.
 
 Write every script, hook, and snippet in zsh (`#!/usr/bin/env zsh`, `.zsh` extension).
 Do not write bash. The only exception is the upstream Homebrew installer in the
-`Makefile`, which requires bash. The `Makefile` itself runs with `SHELL := /bin/zsh`.
+`Makefile`, which requires bash.
+The Makefile runs recipes with `/bin/zsh -eu -o pipefail` and disables parallel execution.
 
 ShellCheck does not understand zsh, so `.zsh` files are excluded from it in
 `.pre-commit-config.yaml` and the CI ShellCheck job.
@@ -36,15 +37,20 @@ ShellCheck does not understand zsh, so `.zsh` files are excluded from it in
 OpenCode V2 does not run language servers, so verification is command-based.
 
 ```zsh
-zsh scripts/validate-configs.zsh   # tmux syntax, all zsh modules, clipboard
-zsh -n zsh.d/<module>.zsh          # syntax of one module
-make verify                        # system dependencies
-time zsh -ic exit                  # startup; target is under 110 ms
+make validate                     # isolated tmux parsing, zsh syntax, static bindings
+make test                         # regression tests in disposable homes
+zsh -dfn zsh.d/<module>.zsh        # syntax of one module, without startup files
+make verify                       # report system dependencies; install nothing
+make benchmark                    # macOS startup-and-exit medians, non-TTY and PTY
 ```
 
-Pre-commit runs the same checks plus Markdownlint, YAMLLint, Typos, and Gitleaks.
+The local startup target is under 110 ms, not a published measurement or the CI runner budget.
+Distinguish non-TTY measurements from PTY measurements; repeat samples on the same machine.
+Pre-commit runs the validator plus Markdownlint, YAMLLint, Typos, and Gitleaks, not the regression suite.
+The validator uses a disposable tmux socket and never reads or writes clipboard contents.
 Test prompt changes in a real pty (`script -q /dev/null zsh -ic '...'`);
 gitstatus cannot start without a TTY.
+`make test` includes a real-plugin PTY check when dependencies are installed; a skip is not a pass.
 
 Use `make profile` to relink configs. Do not run `make all` when it is not needed.
 
@@ -60,12 +66,20 @@ code, from `~/.config/opencode/rules/`:
 
 ## ZSH Loading Order
 
-`zshrc` starts tmux (login shells with a TTY only), bootstraps Zinit, then sources
+`zshrc` starts tmux (login shells with a TTY only), initializes installed Zinit, then sources
 the core modules from `~/.zsh.d/` in this exact order. Never reorder them.
 
 ```text
 env -> options -> history -> plugins -> prompt -> completion -> colors -> kitty -> alias -> tools
 ```
+
+Install Zinit and the declared plugins with `make zsh`; use `make zsh-plugins` to repair missing plugins.
+Do not clone dependencies during interactive startup.
+Keep `GITSTATUS_AUTO_INSTALL=0`; `make zsh-plugins` installs the gitstatus binary explicitly.
+`ZINIT_HOME` and `ZSH_CONFIG_DIR` may be overridden for isolated tests.
+Completion initialization belongs to `completion.zsh`, independent of highlighting.
+Deferred order is completions/tool integration (`0a`), autosuggestions (`0b`), highlighting (`0c`).
+fzf is the sole `Ctrl-R` integration; do not restore `history-search-multi-word`.
 
 Optional modules load afterwards, only when the file exists:
 
@@ -83,8 +97,14 @@ A new generic helper gets its own tracked module sourced from the optional loop 
 
 - **`ls` stays native** (`/bin/ls -G`). `lsd` is explicit via `lsl`, `lsll`, `lsla`,
   `lslt`, because it times out on iCloud paths (`os error 60`).
+- **Standard commands stay native:** `cat`, `grep`, `find`, `ps`, `du`, `df`, and `tree`.
+  Use enhanced tools by their own names; keep aliases in `alias.zsh`.
+- **Reload with `exec zsh`** (`zshreload`), not repeated sourcing of `~/.zshrc`.
 - **Tmux prefix is `C-a`** (also `prefix2`). Copy uses native `pbcopy`/`pbpaste`;
   do not add `tmux-yank`.
+- **Tmux keys must not collide:** `p` selects the previous window, `]` pastes,
+  root `C-l` navigates right, and `C-a C-r` sends clear-screen to the application.
+  Preserve resurrect/continuum restoration and native Neovim-aware routing.
 - **Prompt segments are built in a `precmd` hook** (`prompt.zsh`), never in `$(...)`:
   a subshell loses caches and forks per prompt. Edit the `PROMPT_*` variables at the top.
 - **`TERM` is not forced.** Kitty integration keys off `KITTY_WINDOW_ID`.
@@ -92,6 +112,8 @@ A new generic helper gets its own tracked module sourced from the optional loop 
 - **mise replaces ASDF.** Use `mise use --global <tool>@latest`.
 - **Guard optional tools** with `command -v` and PATH entries with `[[ -d ]]`.
 - **Avoid zsh special names** in scripts: `status`, `path`, `commands`, `options`.
+- **Use the shared link helper** in Makefile recipes; never overwrite an existing `.backup`.
+  `make clean` removes only links resolving to this repository's config sources.
 
 ## Never Commit
 
