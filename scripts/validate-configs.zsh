@@ -1,7 +1,6 @@
 #!/usr/bin/env zsh
 # Configuration validation script for tmux and zsh
-# Validates syntax and configuration integrity
-# Used by pre-commit hook
+# Safe for pre-commit: parse configuration without changing live sessions or clipboard.
 
 setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
@@ -15,13 +14,34 @@ integer ERRORS=0 WARNINGS=0
 print_status() {
   local level=$1 message=$2
   case $level in
-    error) print -r -- "${RED}✗ ERROR${NC}: $message"; (( ERRORS += 1 )) ;;
-    warn)  print -r -- "${YELLOW}⚠ WARN${NC}: $message"; (( WARNINGS += 1 )) ;;
-    ok)    print -r -- "${GREEN}✓ OK${NC}: $message" ;;
+    error) print -r -- "${RED}ERROR${NC}: $message"; (( ERRORS += 1 )) ;;
+    warn)  print -r -- "${YELLOW}WARN${NC}: $message"; (( WARNINGS += 1 )) ;;
+    ok)    print -r -- "${GREEN}OK${NC}: $message" ;;
   esac
 }
 
 DOTFILES_DIR="${0:A:h:h}"
+
+validate_tmux_syntax() {
+  local temp_dir output
+  temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-tmux.XXXXXX")
+  {
+    # No user config, login shell, plugins, or default tmux socket is involved.
+    if ! output=$(tmux -S "$temp_dir/socket" -f /dev/null \
+      new-session -d -s syntax /bin/sleep 30 2>&1); then
+      print -ru2 -- "$output"
+      return 1
+    fi
+    if ! output=$(tmux -S "$temp_dir/socket" source-file -n -v "$TMUX_CONFIG" 2>&1); then
+      print -ru2 -- "$output"
+      return 1
+    fi
+  } always {
+    tmux -S "$temp_dir/socket" kill-server >/dev/null 2>&1 || true
+    [[ ! -e "$temp_dir/socket" ]] || rm -f -- "$temp_dir/socket"
+    rmdir -- "$temp_dir"
+  }
+}
 
 print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 print "Configuration Validation"
@@ -37,35 +57,34 @@ if [[ ! -f $TMUX_CONFIG ]]; then
   print_status error "tmux.conf not found at $TMUX_CONFIG"
 else
   if (( $+commands[tmux] )); then
-    if tmux source-file -v "$TMUX_CONFIG" &>/dev/null; then
+    if validate_tmux_syntax; then
       print_status ok "tmux configuration syntax is valid"
     else
       print_status error "tmux configuration has syntax errors"
-      tmux source-file -v "$TMUX_CONFIG" 2>&1 | head -10
     fi
   else
     print_status warn "tmux not installed, skipping syntax check"
   fi
 
-  if grep -q "copy-pipe-and-cancel.*pbcopy" "$TMUX_CONFIG"; then
+  if grep -q '^bind .*copy-pipe-and-cancel.*pbcopy' "$TMUX_CONFIG"; then
     print_status ok "Copy to clipboard binding found"
   else
     print_status error "Missing pbcopy binding in copy-mode-vi"
   fi
 
-  if grep -q "bind -T copy-mode-vi y" "$TMUX_CONFIG"; then
+  if grep -q '^bind -T copy-mode-vi y ' "$TMUX_CONFIG"; then
     print_status ok "Vi-style 'y' copy binding found"
   else
     print_status error "Missing Vi-style 'y' copy binding"
   fi
 
-  if grep -q "pbpaste" "$TMUX_CONFIG"; then
+  if grep -q '^bind .*pbpaste' "$TMUX_CONFIG"; then
     print_status ok "Paste from clipboard binding found"
   else
     print_status error "Missing pbpaste binding"
   fi
 
-  if grep -q "tmux-yank" "$TMUX_CONFIG" && ! grep -q "^# REMOVED.*tmux-yank" "$TMUX_CONFIG"; then
+  if grep -q '^set .*@plugin.*tmux-yank' "$TMUX_CONFIG"; then
     print_status warn "tmux-yank plugin may conflict with native pbcopy bindings"
   else
     print_status ok "No tmux-yank plugin conflict detected"
@@ -93,11 +112,11 @@ ZSH_CONFIG="$DOTFILES_DIR/zshrc"
 if [[ ! -f $ZSH_CONFIG ]]; then
   print_status error "zshrc not found at $ZSH_CONFIG"
 else
-  if zsh -n "$ZSH_CONFIG" 2>/dev/null; then
+  if zsh -dfn "$ZSH_CONFIG" 2>/dev/null; then
     print_status ok "zshrc syntax is valid"
   else
     print_status error "zshrc has syntax errors"
-    zsh -n "$ZSH_CONFIG" 2>&1 | head -10
+    zsh -dfn "$ZSH_CONFIG" 2>&1 || true
   fi
 
   if grep -q 'source.*\.d/' "$ZSH_CONFIG" || grep -q 'source.*ZSH_CONFIG_DIR' "$ZSH_CONFIG"; then
@@ -116,7 +135,7 @@ ZSH_D_DIR="$DOTFILES_DIR/zsh.d"
 if [[ ! -d $ZSH_D_DIR ]]; then
   print_status error "zsh.d directory not found"
 else
-  # Core modules must exist; optional modules (aws, github, oracle) are
+  # Core modules must exist; optional modules (aws, oracle) are
   # syntax-checked only when present
   REQUIRED_MODULES=(env options history plugins prompt completion colors kitty alias tools)
 
@@ -127,7 +146,7 @@ else
   done
 
   for module_path in $ZSH_D_DIR/*.zsh(N); do
-    if zsh -n "$module_path" 2>/dev/null; then
+    if zsh -dfn "$module_path" 2>/dev/null; then
       print_status ok "${module_path:t} syntax valid"
     else
       print_status error "${module_path:t} has syntax errors"
@@ -136,33 +155,26 @@ else
 fi
 
 # ============================================================================
-# CLIPBOARD FUNCTIONALITY TESTS
+# CLIPBOARD COMMAND AVAILABILITY (NO CLIPBOARD READS OR WRITES)
 # ============================================================================
-print -r -- $'\n'"${YELLOW}[Clipboard Functionality]${NC}"
+print -r -- $'\n'"${YELLOW}[Clipboard Commands]${NC}"
 
 if (( $+commands[pbcopy] && $+commands[pbpaste] )); then
-  TEST_TEXT="clipboard_test_$(date +%s)"
-  if print -r -- "$TEST_TEXT" | pbcopy && pbpaste | grep -q "$TEST_TEXT"; then
-    print_status ok "pbcopy/pbpaste working correctly"
-  else
-    print_status error "pbcopy/pbpaste test failed"
-  fi
+  print_status ok "pbcopy/pbpaste available; clipboard contents untouched"
+elif [[ $OSTYPE != darwin* ]]; then
+  print_status warn "macOS clipboard commands unavailable on this platform"
 else
   print_status error "pbcopy/pbpaste commands not found"
 fi
 
-if (( $+commands[tmux] )); then
-  if tmux new-session -d -s config_test_$$ 2>/dev/null; then
-    tmux send-keys -t config_test_$$ "echo 'tmux_clipboard_test'" Enter
-    sleep 0.5
-    if tmux save-buffer - 2>/dev/null | grep -q tmux_clipboard; then
-      print_status ok "tmux buffer operations working"
-    else
-      print_status warn "tmux buffer test inconclusive"
-    fi
-    tmux kill-session -t config_test_$$ 2>/dev/null || true
+print -r -- $'\n'"${YELLOW}[Script Syntax]${NC}"
+for script_file in "$DOTFILES_DIR"/scripts/*.zsh(N); do
+  if zsh -dfn "$script_file"; then
+    print_status ok "${script_file:t} syntax valid"
+  else
+    print_status error "${script_file:t} has syntax errors"
   fi
-fi
+done
 
 # ============================================================================
 # COLOR PALETTE (Emerald Arcana)
@@ -201,7 +213,7 @@ else
   print_status error "Missing HOMEBREW_PREFIX export"
 fi
 
-if grep -q "export EDITOR=" "$ZSH_ENV" || grep -q "export EDITOR=" "$ZSH_D_DIR"/*.zsh; then
+if grep -q "export EDITOR=" "$ZSH_ENV"; then
   print_status ok "EDITOR environment variable configured"
 else
   print_status error "EDITOR environment variable not configured"
@@ -218,10 +230,10 @@ print -r -- "Errors:   ${RED}$ERRORS${NC}"
 print -r -- "Warnings: ${YELLOW}$WARNINGS${NC}"
 
 if (( ERRORS == 0 )); then
-  print -r -- "${GREEN}✓ All validations passed!${NC}"
-  (( WARNINGS > 0 )) && print -r -- "${YELLOW}⚠ ($WARNINGS warning(s) - not blocking)${NC}"
+  print -r -- "${GREEN}All syntax and static checks passed.${NC}"
+  (( WARNINGS > 0 )) && print -r -- "${YELLOW}($WARNINGS warning(s) - not blocking)${NC}"
   exit 0
 else
-  print -r -- "${RED}✗ Validation failed with $ERRORS error(s)${NC}"
+  print -r -- "${RED}Validation failed with $ERRORS error(s)${NC}"
   exit 1
 fi

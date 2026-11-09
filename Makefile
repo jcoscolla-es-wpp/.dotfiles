@@ -4,9 +4,9 @@
 # =============================================================================
 # Make Configuration
 # =============================================================================
-.ONESHELL:
-SHELL := /bin/zsh
-.SHELLFLAGS := -e -u -o pipefail -c
+# GNU Make 3.81 does not support .ONESHELL or .SHELLFLAGS.
+SHELL := /bin/zsh -eu -o pipefail
+.NOTPARALLEL:
 .DELETE_ON_ERROR:
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
@@ -15,11 +15,11 @@ MAKEFLAGS += --no-builtin-rules
 # Phony Targets
 # =============================================================================
 .PHONY: help all verify check-xcode brew mise kitty clean
-.PHONY: profile zsh neovim tmux git install-tpm
+.PHONY: profile zsh neovim tmux git install-tpm install-zinit zsh-plugins
 .PHONY: tools brew-tools nodejs golang ruby terraform
 .PHONY: kubernetes kubectl helm kind kubectx
 .PHONY: docker aws gcloud azure
-.PHONY: list update
+.PHONY: list update nodejs-update validate test benchmark
 
 # =============================================================================
 # Default Target
@@ -35,11 +35,12 @@ GREEN  := $(shell tput setaf 2)
 YELLOW := $(shell tput setaf 3)
 RESET  := $(shell tput sgr0)
 
-DOTFILES   := $(HOME)/.dotfiles
+DOTFILES   := $(CURDIR)
 CONFIG_DIR := $(HOME)/.config
 KITTY_CONFIG := $(CONFIG_DIR)/kitty
-
-OS := $(shell uname -s)
+XDG_DATA_HOME ?= $(HOME)/.local/share
+ZINIT_HOME ?= $(XDG_DATA_HOME)/zinit/zinit.git
+LINK_CONFIG := /bin/zsh "$(DOTFILES)/scripts/link-config.zsh"
 
 # =============================================================================
 # Helper Functions
@@ -68,6 +69,9 @@ help: ## Show this help message
 	@echo "$(BOLD)Tool Targets:$(RESET)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(brew-tools|nodejs|golang|terraform|kubernetes|list|update):' | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)  %-28s$(RESET) %s\n", $$1, $$2}'
 	@echo ""
+	@echo "$(BOLD)Checks and Shell Maintenance:$(RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(validate|test|benchmark|zsh-plugins):' | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)  %-28s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
 
 # =============================================================================
 # Verification Targets
@@ -77,11 +81,7 @@ check-xcode: ## Verify Xcode Command Line Tools are installed
 	@if ! xcode-select -p &>/dev/null; then \
 		echo "$(RED)✗ Xcode Command Line Tools not found$(RESET)"; \
 		echo ""; \
-		echo "$(YELLOW)Installing Xcode Command Line Tools...$(RESET)"; \
-		echo "$(YELLOW)A dialog will appear - please click Install$(RESET)"; \
-		xcode-select --install; \
-		echo ""; \
-		echo "$(YELLOW)Please complete the installation and run 'make' again$(RESET)"; \
+		echo "$(YELLOW)Run xcode-select --install, complete the installation, then retry.$(RESET)"; \
 		exit 1; \
 	else \
 		echo "$(GREEN)✓ Xcode Command Line Tools installed at $$(xcode-select -p)$(RESET)"; \
@@ -135,7 +135,7 @@ all: check-xcode brew mise profile tools kitty ## Install all components (full s
 	@echo "$(GREEN)$(BOLD)✓ Full installation complete!$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)Next steps:$(RESET)"
-	@echo "  1. Restart your terminal or run: source ~/.zshrc"
+	@echo "  1. Restart your terminal or run: exec zsh"
 	@echo "  2. Open Kitty terminal for the full experience"
 	@echo "  3. Run 'nvim' to complete plugin installation"
 	@echo ""
@@ -157,7 +157,7 @@ brew: check-xcode ## Install Homebrew package manager
 		fi; \
 		echo "$(GREEN)✓ Homebrew installed successfully!$(RESET)"; \
 	else \
-		echo "$(GREEN)✓ Homebrew already installed at $$(which brew)$(RESET)"; \
+		echo "$(GREEN)✓ Homebrew already installed at $$(command -v brew)$(RESET)"; \
 		echo "Version: $$(brew --version | head -n 1)"; \
 	fi
 
@@ -175,7 +175,7 @@ mise: brew ## Install mise version manager
 	@if command -v mise &>/dev/null; then \
 		echo "$(GREEN)✓ mise active: $$(mise --version)$(RESET)"; \
 	else \
-		echo "$(YELLOW)mise installed but not yet in PATH. Run: source ~/.zshrc$(RESET)"; \
+		echo "$(YELLOW)mise installed but not yet in PATH. Run: exec zsh$(RESET)"; \
 	fi
 
 kitty: brew ## Install Kitty terminal emulator and configuration
@@ -188,7 +188,6 @@ kitty: brew ## Install Kitty terminal emulator and configuration
 	fi
 	@echo ""
 	@echo "$(BOLD)Installing JetBrains Mono font...$(RESET)"
-	@brew tap homebrew/cask-fonts 2>/dev/null || true
 	@if ! brew list --cask font-jetbrains-mono >/dev/null 2>&1; then \
 		echo "$(YELLOW)Installing font...$(RESET)"; \
 		brew install --cask font-jetbrains-mono; \
@@ -201,26 +200,21 @@ kitty: brew ## Install Kitty terminal emulator and configuration
 		echo "$(RED)✗ kitty.conf not found at $(DOTFILES)/kitty.conf$(RESET)"; \
 		exit 1; \
 	fi
-	@mkdir -p $(KITTY_CONFIG)
-	@if [ -f "$(KITTY_CONFIG)/kitty.conf" ] && [ ! -L "$(KITTY_CONFIG)/kitty.conf" ]; then \
-		echo "$(YELLOW)Backing up existing kitty.conf to kitty.conf.backup$(RESET)"; \
-		mv $(KITTY_CONFIG)/kitty.conf $(KITTY_CONFIG)/kitty.conf.backup; \
-	fi
-	@ln -sf $(DOTFILES)/kitty.conf $(KITTY_CONFIG)/kitty.conf
+	@$(LINK_CONFIG) "$(DOTFILES)/kitty.conf" "$(KITTY_CONFIG)/kitty.conf"
 	@echo "$(GREEN)✓ Kitty configuration linked$(RESET)"
 	@echo "  ~/.config/kitty/kitty.conf -> $(DOTFILES)/kitty.conf"
 	@echo ""
 	@echo "$(GREEN)$(BOLD)✓ Kitty setup complete!$(RESET)"
 
-clean: ## Remove symbolic links and temporary files
+clean: ## Unlink this repository's configs; preserve files and unrelated links
 	@echo "$(BOLD)Cleaning up...$(RESET)"
 	@echo "$(YELLOW)This will remove symlinked configurations$(RESET)"
-	@rm -f $(KITTY_CONFIG)/kitty.conf
-	@rm -f $(HOME)/.zshrc
-	@rm -rf $(HOME)/.zsh.d
-	@rm -rf $(HOME)/.config/nvim
-	@rm -f $(HOME)/.tmux.conf
-	@rm -f $(HOME)/.gitignore_global
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/kitty.conf" "$(KITTY_CONFIG)/kitty.conf"
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/zshrc" "$(HOME)/.zshrc"
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/zsh.d" "$(HOME)/.zsh.d"
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/nvim" "$(CONFIG_DIR)/nvim"
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/tmux.conf" "$(HOME)/.tmux.conf"
+	@$(LINK_CONFIG) --unlink "$(DOTFILES)/gitignore_global" "$(HOME)/.gitignore_global"
 	@echo "$(GREEN)✓ Cleanup complete$(RESET)"
 
 # =============================================================================
@@ -231,11 +225,26 @@ profile: zsh neovim tmux git ## Install all profile configurations (ZSH, Neovim,
 	@echo "$(GREEN)$(BOLD)✓ Profile configuration complete!$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)Next steps:$(RESET)"
-	@echo "  1. Restart your terminal or run: source ~/.zshrc"
+	@echo "  1. Restart your terminal or run: exec zsh"
 	@echo "  2. Run 'nvim' to install plugins automatically"
 	@echo ""
 
-zsh: ## Install ZSH configuration (Zinit + modules)
+install-zinit: ## Install Zinit if missing; do not update existing installations
+	@if [[ ! -r "$(ZINIT_HOME)/zinit.zsh" ]]; then \
+		if [[ -e "$(ZINIT_HOME)" || -L "$(ZINIT_HOME)" ]]; then \
+			print -ru2 -- "Incomplete Zinit installation: $(ZINIT_HOME)"; \
+			exit 1; \
+		fi; \
+		ZINIT_DIR="$(ZINIT_HOME)"; mkdir -p "$${ZINIT_DIR:h}"; \
+		git clone --depth=1 https://github.com/zdharma-continuum/zinit.git "$(ZINIT_HOME)"; \
+	fi
+
+zsh-plugins: install-zinit ## Install missing ZSH plugins without updating existing ones
+	@ZINIT_HOME="$(ZINIT_HOME)" DOTFILES="$(DOTFILES)" DOTFILES_INSTALL_PLUGINS=1 \
+		/bin/zsh -df -e -c 'source "$$ZINIT_HOME/zinit.zsh"; source "$$DOTFILES/zsh.d/plugins.zsh"; \
+		/bin/zsh "$${ZINIT[PLUGINS_DIR]}/romkatv---gitstatus/install"'
+
+zsh: zsh-plugins ## Install ZSH configuration (Zinit + modules)
 	@echo "$(BOLD)Installing ZSH configuration...$(RESET)"
 	@if [ ! -f "$(DOTFILES)/zshrc" ]; then \
 		echo "$(RED)✗ zshrc not found at $(DOTFILES)/zshrc$(RESET)"; \
@@ -245,16 +254,8 @@ zsh: ## Install ZSH configuration (Zinit + modules)
 		echo "$(RED)✗ zsh.d directory not found at $(DOTFILES)/zsh.d$(RESET)"; \
 		exit 1; \
 	fi
-	@if [ -f "$(HOME)/.zshrc" ] && [ ! -L "$(HOME)/.zshrc" ]; then \
-		echo "$(YELLOW)Backing up existing .zshrc to .zshrc.backup$(RESET)"; \
-		mv $(HOME)/.zshrc $(HOME)/.zshrc.backup; \
-	fi
-	@if [ -d "$(HOME)/.zsh.d" ] && [ ! -L "$(HOME)/.zsh.d" ]; then \
-		echo "$(YELLOW)Backing up existing .zsh.d to .zsh.d.backup$(RESET)"; \
-		mv $(HOME)/.zsh.d $(HOME)/.zsh.d.backup; \
-	fi
-	@ln -sf $(DOTFILES)/zshrc $(HOME)/.zshrc
-	@ln -sf $(DOTFILES)/zsh.d $(HOME)/.zsh.d
+	@$(LINK_CONFIG) "$(DOTFILES)/zshrc" "$(HOME)/.zshrc"
+	@$(LINK_CONFIG) "$(DOTFILES)/zsh.d" "$(HOME)/.zsh.d"
 	@echo "$(GREEN)✓ ZSH configuration installed$(RESET)"
 	@echo "  ~/.zshrc  -> $(DOTFILES)/zshrc"
 	@echo "  ~/.zsh.d  -> $(DOTFILES)/zsh.d"
@@ -269,13 +270,7 @@ neovim: ## Install Neovim configuration (lazy.nvim + LSP)
 		echo "$(RED)✗ nvim directory not found at $(DOTFILES)/nvim$(RESET)"; \
 		exit 1; \
 	fi
-	@mkdir -p $(CONFIG_DIR)
-	@if [ -d "$(CONFIG_DIR)/nvim" ] && [ ! -L "$(CONFIG_DIR)/nvim" ]; then \
-		echo "$(YELLOW)Backing up existing nvim config to nvim.backup$(RESET)"; \
-		mv $(CONFIG_DIR)/nvim $(CONFIG_DIR)/nvim.backup; \
-	fi
-	@rm -rf $(CONFIG_DIR)/nvim
-	@ln -sf $(DOTFILES)/nvim $(CONFIG_DIR)/nvim
+	@$(LINK_CONFIG) "$(DOTFILES)/nvim" "$(CONFIG_DIR)/nvim"
 	@echo "$(GREEN)✓ Neovim configuration installed$(RESET)"
 	@echo "  ~/.config/nvim -> $(DOTFILES)/nvim"
 	@echo "$(YELLOW)  Run 'nvim' to install plugins automatically$(RESET)"
@@ -301,11 +296,7 @@ tmux: install-tpm ## Install Tmux configuration
 		echo "$(RED)✗ tmux.conf not found at $(DOTFILES)/tmux.conf$(RESET)"; \
 		exit 1; \
 	fi
-	@if [ -f "$(HOME)/.tmux.conf" ] && [ ! -L "$(HOME)/.tmux.conf" ]; then \
-		echo "$(YELLOW)Backing up existing .tmux.conf to .tmux.conf.backup$(RESET)"; \
-		mv $(HOME)/.tmux.conf $(HOME)/.tmux.conf.backup; \
-	fi
-	@ln -sf $(DOTFILES)/tmux.conf $(HOME)/.tmux.conf
+	@$(LINK_CONFIG) "$(DOTFILES)/tmux.conf" "$(HOME)/.tmux.conf"
 	@echo "$(GREEN)✓ Tmux configuration installed$(RESET)"
 	@echo "  ~/.tmux.conf -> $(DOTFILES)/tmux.conf"
 	@echo "$(YELLOW)  To install plugins: open tmux and press Ctrl+A then I$(RESET)"
@@ -316,11 +307,7 @@ git: ## Install Git configuration (gitignore_global)
 		echo "$(RED)✗ gitignore_global not found at $(DOTFILES)/gitignore_global$(RESET)"; \
 		exit 1; \
 	fi
-	@if [ -f "$(HOME)/.gitignore_global" ] && [ ! -L "$(HOME)/.gitignore_global" ]; then \
-		echo "$(YELLOW)Backing up existing .gitignore_global$(RESET)"; \
-		mv $(HOME)/.gitignore_global $(HOME)/.gitignore_global.backup; \
-	fi
-	@ln -sf $(DOTFILES)/gitignore_global $(HOME)/.gitignore_global
+	@$(LINK_CONFIG) "$(DOTFILES)/gitignore_global" "$(HOME)/.gitignore_global"
 	@git config --global core.excludesfile $(HOME)/.gitignore_global 2>/dev/null || true
 	@echo "$(GREEN)✓ Git configuration installed$(RESET)"
 	@echo "  ~/.gitignore_global -> $(DOTFILES)/gitignore_global"
@@ -450,3 +437,12 @@ update: ## Update mise and all managed tools
 	@echo "$(BOLD)Upgrading all tools...$(RESET)"
 	@mise upgrade 2>&1 || true
 	@echo "$(GREEN)✓ Update complete$(RESET)"
+
+validate: ## Check configuration syntax without touching live sessions or clipboard
+	@/bin/zsh "$(DOTFILES)/scripts/validate-configs.zsh"
+
+test: validate ## Run shell and installer regression tests in temporary directories
+	@/bin/zsh "$(DOTFILES)/scripts/test-shell.zsh"
+
+benchmark: ## Measure warm startup-and-exit, with and without a PTY (macOS)
+	@/bin/zsh "$(DOTFILES)/scripts/benchmark-shell.zsh"
