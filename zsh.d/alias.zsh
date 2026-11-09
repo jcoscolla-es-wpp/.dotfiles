@@ -2,7 +2,7 @@
 # Optimized for macOS
 
 # Docker/Podman container shortcuts
-if command -v docker &>/dev/null || command -v podman &>/dev/null; then
+if command -v docker &>/dev/null; then
   alias kali='docker run --rm -ti kalilinux/kali-last-release bash'
   alias debian='docker run --rm -ti debian:latest bash'
   alias ubuntu='docker run --rm -ti ubuntu:latest bash'
@@ -11,8 +11,7 @@ fi
 
 # bat - Better cat with syntax highlighting
 if command -v bat &>/dev/null; then
-  alias cat='bat --paging=never'
-  alias catt='bat'  # Full bat with paging
+  alias catt='bat --paging=never'
   alias batp='bat --style=plain'  # Plain without line numbers
 fi
 
@@ -33,7 +32,6 @@ if command -v lsd &>/dev/null; then
   alias lsll='lsd -lA --group-directories-first --git-repos=never'
   alias lsla='lsd -A --group-directories-first --git-repos=never'
   alias lslt='lsd --tree --group-directories-first --ignore-glob .git'
-  alias tree='lsd --tree --ignore-glob .git'
 elif command -v eza &>/dev/null; then
   # eza - Alternative modern ls replacement
   # Documentation: https://github.com/eza-community/eza
@@ -41,28 +39,12 @@ elif command -v eza &>/dev/null; then
   alias lsll='eza -la --icons --group-directories-first --git'
   alias lsla='eza -a --icons --group-directories-first'
   alias lslt='eza --tree --icons --group-directories-first --git-ignore'
-  alias tree='eza --tree --icons --git-ignore'
 fi
 
-# Modern Unix tools replacements
-if command -v fd &>/dev/null; then
-  alias find='fd'
-fi
-
-if command -v rg &>/dev/null; then
-  alias grep='rg'
-fi
-
-if command -v dust &>/dev/null; then
-  alias du='dust'
-fi
-
-if command -v duf &>/dev/null; then
-  alias df='duf'
-fi
-
-if command -v procs &>/dev/null; then
-  alias ps='procs'
+# Keep standard Unix commands native; enhanced tools keep their own names.
+if command -v nvim &>/dev/null; then
+  alias vi='nvim'
+  alias vim='nvim'
 fi
 
 # macOS specific aliases
@@ -96,8 +78,8 @@ alias localip='ipconfig getifaddr en0'
 alias ports='lsof -i -P | grep LISTEN'
 
 # Quick edits
-alias zshrc='$EDITOR ~/.zshrc'
-alias zshreload='source ~/.zshrc'
+alias zshrc='$EDITOR ${DOTFILES:-$HOME/.dotfiles}/zshrc'
+alias zshreload='exec zsh'
 
 # Git shortcuts (if git is available)
 if command -v git &>/dev/null; then

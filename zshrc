@@ -9,16 +9,16 @@ if [[ -z "$TMUX" ]] && [[ -o login ]] && [[ -t 0 ]]; then
   fi
 fi
 
-# Zinit: Plugin manager initialization
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [[ ! -d $ZINIT_HOME ]]; then
-  mkdir -p "$(dirname $ZINIT_HOME)"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+# Installation belongs to Makefile, not to interactive startup.
+ZINIT_HOME="${ZINIT_HOME:-${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git}"
+if [[ -r "$ZINIT_HOME/zinit.zsh" ]]; then
+  source "$ZINIT_HOME/zinit.zsh"
+else
+  print -ru2 -- 'Zinit is not installed. Run make zsh to enable plugins.'
 fi
-source "${ZINIT_HOME}/zinit.zsh"
 
 # Load modular configuration files
-ZSH_CONFIG_DIR="${HOME}/.zsh.d"
+ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-${HOME}/.zsh.d}"
 
 source "${ZSH_CONFIG_DIR}/env.zsh"        # Environment variables and paths
 source "${ZSH_CONFIG_DIR}/options.zsh"    # Zsh options (navigation, etc.)
@@ -36,10 +36,3 @@ for _module in oracle aws; do
   [[ -r "${ZSH_CONFIG_DIR}/${_module}.zsh" ]] && source "${ZSH_CONFIG_DIR}/${_module}.zsh"
 done
 unset _module
-
-# direnv hook: precmd also runs after every cd, so no chpwd hook is needed
-if command -v direnv &>/dev/null; then
-  _direnv_hook() { eval "$(direnv export zsh)"; }
-  autoload -Uz add-zsh-hook
-  add-zsh-hook precmd _direnv_hook
-fi

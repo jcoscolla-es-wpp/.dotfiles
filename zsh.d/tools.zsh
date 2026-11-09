@@ -7,19 +7,9 @@ if command -v mise &>/dev/null; then
   eval "$(mise activate zsh)"
 fi
 
-# TMUX: auto-start handled in zshrc (login shells with TTY only)
-
-# Neovim aliases (EDITOR/VISUAL set in env.zsh)
-# Documentation: https://neovim.io/
-if command -v nvim &>/dev/null; then
-  alias vi="nvim"
-  alias vim="nvim"
-fi
-
 # fzf - Fuzzy finder configuration
 # Documentation: https://github.com/junegunn/fzf
-# Note: fzf scripts are lazy-loaded via Zinit in plugins.zsh
-if command -v fzf &>/dev/null || [[ -f "$HOMEBREW_PREFIX/opt/fzf/bin/fzf" ]]; then
+if command -v fzf &>/dev/null; then
   # fzf appearance and behavior
   export FZF_DEFAULT_OPTS='
     --height 40%
@@ -36,6 +26,7 @@ if command -v fzf &>/dev/null || [[ -f "$HOMEBREW_PREFIX/opt/fzf/bin/fzf" ]]; th
   if command -v fd &>/dev/null; then
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
   fi
 fi
 
@@ -47,8 +38,17 @@ if command -v bat &>/dev/null; then
   export BAT_STYLE="numbers,changes,header"
 fi
 
-# zoxide - Smarter cd command that learns your habits
-# Documentation: https://github.com/ajeetdsouza/zoxide
-if command -v zoxide &>/dev/null; then
-  eval "$(zoxide init zsh)"
+# These integrations need compinit and must precede the editing plugins.
+_tools_completion_init() {
+  if (( $+commands[fzf] )); then
+    source <(fzf --zsh)
+  fi
+  if (( $+commands[zoxide] )); then
+    eval "$(zoxide init zsh)"
+  fi
+}
+[[ $_ZSH_COMPLETIONS_READY == true ]] && _tools_completion_init
+
+if command -v direnv &>/dev/null; then
+  eval "$(direnv hook zsh)"
 fi

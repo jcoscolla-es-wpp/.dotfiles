@@ -47,9 +47,4 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
   fi
 
-  # Colored grep output (matches selected theme)
-  export GREP_COLOR='1;32'  # Bold green
-  alias grep='grep --color=auto'
-  alias fgrep='fgrep --color=auto'
-  alias egrep='egrep --color=auto'
 fi

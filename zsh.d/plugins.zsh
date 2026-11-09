@@ -1,37 +1,47 @@
-# Zinit Plugins - Optimized with Turbo Mode
+# Prompt dependencies load now; completion and editing plugins load after the prompt.
+typeset -ga ZSH_PLUGINS=(
+  romkatv/gitstatus
+  zsh-users/zsh-completions
+  zsh-users/zsh-autosuggestions
+  zdharma-continuum/fast-syntax-highlighting
+)
+typeset -g _ZSH_COMPLETIONS_DEFERRED=false
+typeset -ga ZSH_AUTOSUGGEST_STRATEGY=(history)
+typeset -g ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=80
+typeset -g ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'  # ANSI bright black = comment, 5.23 contrast
 
-# Turbo-loaded plugins (deferred for faster startup)
-# wait'0' = load immediately after prompt, but asynchronously
+(( $+functions[zinit] )) || return 0
 
-# gitstatus: Ultra-fast git prompt (10x faster than vcs_info)
-# Must load synchronously for prompt to work
-zinit ice depth=1
-zinit light romkatv/gitstatus
+for _plugin in $ZSH_PLUGINS; do
+  if [[ ${DOTFILES_INSTALL_PLUGINS:-0} == 1 && ! -o interactive ]]; then
+    zinit light "$_plugin"
+    continue
+  fi
 
-# Completions (load early, needed by other plugins)
-zinit ice wait'0' lucid blockf atpull'zinit creinstall -q .'
-zinit light zsh-users/zsh-completions
+  # A missing plugin must not turn terminal startup into a network operation.
+  if [[ ! -d "${ZINIT[PLUGINS_DIR]}/${_plugin//\//---}" ]]; then
+    print -ru2 -- "Missing plugin $_plugin. Run make zsh-plugins to install it."
+    continue
+  fi
 
-# Autosuggestions
-zinit ice wait'0' lucid atload'_zsh_autosuggest_start'
-zinit light zsh-users/zsh-autosuggestions
-export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-export ZSH_AUTOSUGGEST_USE_ASYNC=1
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'  # ANSI bright black = comment, 5.23 contrast
-
-# Syntax highlighting (load last among completions)
-zinit ice wait'0' lucid atinit'zicompinit; zicdreplay'
-zinit light zdharma-continuum/fast-syntax-highlighting
-
-# History search
-zinit ice wait'0' lucid
-zinit light zdharma-continuum/history-search-multi-word
-
-# fzf: Fuzzy finder (lazy-loaded for faster startup)
-# Load keybindings and completion scripts asynchronously
-if [[ -f "$HOMEBREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ]]; then
-  zinit ice wait'1' lucid \
-    multisrc"$HOMEBREW_PREFIX/opt/fzf/shell/{key-bindings,completion}.zsh"
-  zinit light zdharma-continuum/null
-fi
+  case $_plugin in
+    romkatv/gitstatus)
+      zinit ice depth=1
+      ;;
+    zsh-users/zsh-completions)
+      _ZSH_COMPLETIONS_DEFERRED=true
+      zinit ice wait'0a' lucid blockf atpull'zinit creinstall -q .' atload'_completion_init'
+      ;;
+    zsh-users/zsh-autosuggestions)
+      zinit ice wait'0b' lucid atload'_zsh_autosuggest_start'
+      ;;
+    zdharma-continuum/fast-syntax-highlighting)
+      zinit ice wait'0c' lucid
+      ;;
+    *)
+      zinit ice wait'0b' lucid
+      ;;
+  esac
+  zinit light "$_plugin"
+done
+unset _plugin

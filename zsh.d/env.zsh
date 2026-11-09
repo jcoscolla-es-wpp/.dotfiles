@@ -1,36 +1,30 @@
 # Environment Variables and Paths
 # Loaded early in shell initialization
 
-# Keep PATH free of duplicates, including after `source ~/.zshrc`
+# Keep PATH free of duplicates when integrations prepend their directories.
 typeset -U path PATH
 
-# macOS specific environment
-export OSTYPE="${OSTYPE:-darwin}"
+# Zsh already provides the platform and architecture; no subprocess is needed.
+if [[ -z "$HOMEBREW_PREFIX" ]]; then
+  case "$OSTYPE:$CPUTYPE" in
+    darwin*:arm64|darwin*:aarch64) HOMEBREW_PREFIX=/opt/homebrew ;;
+    *) HOMEBREW_PREFIX=/usr/local ;;
+  esac
+fi
+export HOMEBREW_PREFIX
 
-# Homebrew paths (macOS specific)
-# Cache brew prefix to avoid repeated slow calls
-# Manual setup is ~100ms faster than 'brew shellenv'
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  if [[ "$(uname -m)" == "arm64" ]]; then
-    export HOMEBREW_PREFIX="/opt/homebrew"
-  else
-    export HOMEBREW_PREFIX="/usr/local"
-  fi
-else
-  # Fallback for non-macOS systems
-  export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/usr/local}"
+if [[ -d "$HOMEBREW_PREFIX" ]]; then
+  export HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
+  export HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX"
+  export MANPATH="$HOMEBREW_PREFIX/share/man:${MANPATH:-}"
+  export INFOPATH="$HOMEBREW_PREFIX/share/info${INFOPATH:+:$INFOPATH}"
 fi
 
-# Export Homebrew environment manually (faster than eval)
-export HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
-export HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX"
-export PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
-export MANPATH="$HOMEBREW_PREFIX/share/man${MANPATH+:$MANPATH}"
-export INFOPATH="$HOMEBREW_PREFIX/share/info${INFOPATH+:$INFOPATH}"
-
-# Add directories to PATH (ordered by priority)
-export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
-[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+for _dir in "$HOMEBREW_PREFIX/sbin" "$HOMEBREW_PREFIX/bin" \
+  "$HOME/.local/bin" "$HOME/bin" "$HOME/.opencode/bin"; do
+  [[ -d "$_dir" ]] && path=("$_dir" $path)
+done
+unset _dir
 
 # Locale configuration (UTF-8 support); LC_ALL is left unset so LC_* overrides work
 export LANG=en_US.UTF-8
@@ -38,6 +32,9 @@ export LANG=en_US.UTF-8
 # TERM is left to the terminal (xterm-kitty) and tmux (tmux-256color)
 export COLORTERM="truecolor"
 
-# Editor preferences
-export EDITOR="nvim"
-export VISUAL="nvim"
+if (( $+commands[nvim] )); then
+  export EDITOR=nvim
+else
+  export EDITOR="${EDITOR:-vi}"
+fi
+export VISUAL="$EDITOR"
