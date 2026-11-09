@@ -165,6 +165,31 @@ if (( $+commands[tmux] )); then
 fi
 
 # ============================================================================
+# COLOR PALETTE (Emerald Arcana)
+# ============================================================================
+print -r -- $'\n'"${YELLOW}[Color Palette]${NC}"
+
+PALETTE_FILE="$DOTFILES_DIR/scripts/palette.zsh"
+if [[ ! -f $PALETTE_FILE ]]; then
+  print_status error "palette.zsh not found at $PALETTE_FILE"
+else
+  source "$PALETTE_FILE"
+  typeset -a allowed_hex
+  allowed_hex=(${(L)PALETTE} ${(L)PALETTE_DERIVED})
+  for color_file in kitty.conf tmux.conf zsh.d/tools.zsh zsh.d/plugins.zsh nvim/lua/plugins/editor.lua; do
+    [[ -f $DOTFILES_DIR/$color_file ]] || { print_status error "$color_file not found"; continue }
+    typeset -a found_hex unknown_hex
+    found_hex=(${(L)${(f)"$(grep -o -E '#[0-9a-fA-F]{6}\b' "$DOTFILES_DIR/$color_file" || true)"}})
+    unknown_hex=(${(u)found_hex:|allowed_hex})
+    if (( ${#unknown_hex} == 0 )); then
+      print_status ok "$color_file uses only palette colors"
+    else
+      print_status error "$color_file uses colors outside the palette: ${(j:, :)unknown_hex}"
+    fi
+  done
+fi
+
+# ============================================================================
 # ENVIRONMENT VARIABLES
 # ============================================================================
 print -r -- $'\n'"${YELLOW}[Environment Variables]${NC}"
