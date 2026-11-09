@@ -10,6 +10,10 @@ permissions:
   contents: read
   pull-requests: write
 
+defaults:
+  run:
+    shell: zsh -df -e -o pipefail {0}
+
 jobs:
   validate:
     name: macOS Config Validation
@@ -21,22 +25,19 @@ jobs:
       # ── Install tools ──────────────────────────────────────────────────────
       - name: Install tools
         run: |
-          brew install tmux neovim kitty mise
+          brew install tmux neovim kitty mise fzf zoxide direnv
           echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
 
       # ── Symlink configs ────────────────────────────────────────────────────
       - name: Symlink configs
         run: |
-          ln -sf "$GITHUB_WORKSPACE/zshrc"           "$HOME/.zshrc"
-          ln -sf "$GITHUB_WORKSPACE/zsh.d"           "$HOME/.zsh.d"
-          ln -sf "$GITHUB_WORKSPACE/tmux.conf"       "$HOME/.tmux.conf"
-          ln -sf "$GITHUB_WORKSPACE/gitignore_global" "$HOME/.gitignore_global"
-          mkdir -p "$HOME/.config/kitty"
-          ln -sf "$GITHUB_WORKSPACE/kitty.conf"      "$HOME/.config/kitty/kitty.conf"
-          mkdir -p "$HOME/.config"
-          ln -sf "$GITHUB_WORKSPACE/nvim"            "$HOME/.config/nvim"
-          echo "Symlinks created:"
-          ls -la "$HOME/.zshrc" "$HOME/.zsh.d" "$HOME/.tmux.conf" "$HOME/.config/nvim"
+          make zsh
+          zsh scripts/link-config.zsh "$GITHUB_WORKSPACE/tmux.conf" "$HOME/.tmux.conf"
+          zsh scripts/link-config.zsh "$GITHUB_WORKSPACE/kitty.conf" "$HOME/.config/kitty/kitty.conf"
+          zsh scripts/link-config.zsh "$GITHUB_WORKSPACE/nvim" "$HOME/.config/nvim"
+
+      - name: "[Shell] Syntax and regression tests"
+        run: make test
 
       # ── ZSH: syntax ────────────────────────────────────────────────────────
       - name: "[ZSH] Syntax check"
@@ -58,54 +59,38 @@ jobs:
       # ── ZSH: startup time ─────────────────────────────────────────────────
       - name: "[ZSH] Startup time"
         run: |
-          # Pre-install zinit so startup time reflects real usage, not first-clone overhead
-          ZINIT_HOME="$HOME/.local/share/zinit/zinit.git"
-          git clone --depth=1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME" 2>/dev/null
-          echo "Measuring ZSH startup (3 runs)..."
-          times=()
-          for i in 1 2 3; do
-            ms=$({ time zsh -i -c exit; } 2>&1 | grep real | awk '{print $2}' | sed 's/[ms]/ /g' | awk '{print int($1*60000 + $2*1000)}')
-            times+=("$ms")
-            echo "  Run $i: ${ms}ms"
-          done
-          total=0
-          for t in "${times[@]}"; do total=$((total + t)); done
-          mean=$((total / 3))
-          echo "Mean: ${mean}ms (threshold: 500ms)"
-          echo "STARTUP_MEAN=${mean}" >> "$GITHUB_ENV"
-          [ $mean -le 500 ] && echo "ZSH startup OK" || echo "WARNING: startup time ${mean}ms > 500ms threshold"
+          results=$(zsh scripts/benchmark-shell.zsh 7)
+          print -r -- "$results"
+          non_tty=$(print -r -- "$results" | awk -F= '/^non_tty_median_ms=/ {print $2}')
+          pty=$(print -r -- "$results" | awk -F= '/^pty_median_ms=/ {print $2}')
+          print -r -- "STARTUP_NON_TTY=$non_tty" >> "$GITHUB_ENV"
+          print -r -- "STARTUP_PTY=$pty" >> "$GITHUB_ENV"
+          # Runner budget, not the local 110ms target. Plugin readiness is tested separately.
+          (( non_tty <= 500 && pty <= 500 )) || { print -ru2 -- 'Startup exceeds the 500ms runner budget'; exit 1; }
 
       - name: "[ZSH] Comment startup time on PR"
         if: github.event_name == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
-            const mean = process.env.STARTUP_MEAN || 'n/a';
-            const ok = parseInt(mean) <= 500;
+            const nonTty = process.env.STARTUP_NON_TTY || 'n/a';
+            const pty = process.env.STARTUP_PTY || 'n/a';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### ZSH Startup Time\n| Metric | Value |\n|--------|-------|\n| Mean (3 runs) | ${mean}ms |\n| Threshold | 500ms |\n| Status | ${ok ? '✅ OK' : '⚠️ Over threshold'} |`
+              body: `### ZSH startup-and-exit\n| Metric | Median (7 warm samples) |\n|--------|-------|\n| Non-TTY | ${nonTty}ms |\n| PTY (includes script overhead) | ${pty}ms |\n\nRunner budget: 500ms for each metric. First-prompt latency is not measured here; interactive plugin readiness is tested separately.`
             });
 
       # ── TMUX ──────────────────────────────────────────────────────────────
       - name: "[TMUX] Validate config"
         run: |
-          mkdir -p "$HOME/.tmux/plugins"
-          git clone --depth=1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" 2>/dev/null || true
-          tmux new-session -d -s ci 2>/dev/null || true
-          tmux source-file "$HOME/.tmux.conf"
-          echo "TMUX config OK"
+          zsh scripts/validate-configs.zsh
 
       # ── Kitty ─────────────────────────────────────────────────────────────
       - name: "[Kitty] Validate config"
         run: |
-          if kitty --check-config 2>&1; then
-            echo "Kitty config OK"
-          else
-            echo "Kitty: config check skipped (headless CI — expected without GPU/display)"
-          fi
+          kitty +runpy 'from kitty.config import load_config; errors = []; load_config("kitty.conf", accumulate_bad_lines=errors); assert not errors, errors; print("Kitty config parsed")'
 
       # ── Neovim ────────────────────────────────────────────────────────────
       - name: "[Nvim] Validate config"
@@ -138,9 +123,10 @@ jobs:
           echo "| Tool | Check |" >> "$GITHUB_STEP_SUMMARY"
           echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| ZSH | Syntax (zshrc + zsh.d modules) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| ZSH | Startup time (mean: ${STARTUP_MEAN:-n/a}ms, threshold 500ms) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| TMUX | \`tmux source-file\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Kitty | \`kitty --check-config\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ZSH | Warm startup-and-exit medians: non-TTY ${STARTUP_NON_TTY:-n/a}ms, PTY ${STARTUP_PTY:-n/a}ms; runner budget 500ms |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Shell | \`make test\`: native fallback, installer safety, effective tmux bindings, installed-plugin PTY test when dependencies are present |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| TMUX | Parse-only validation on a disposable private socket |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Kitty | Headless configuration parser |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Neovim | \`nvim --headless +qa\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Mise | \`mise doctor\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| macOS | SIP + Gatekeeper status |" >> "$GITHUB_STEP_SUMMARY"

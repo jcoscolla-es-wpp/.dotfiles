@@ -21,7 +21,7 @@ jobs:
         with:
           scandir: ./scripts
           severity: warning
-          ignore_names: validate-configs.zsh
+          ignore_names: benchmark-shell.zsh link-config.zsh test-shell.zsh validate-configs.zsh
 
   validate-configs:
     name: Validate Configs
@@ -51,6 +51,10 @@ jobs:
       - name: Validate zshrc syntax
         run: |
           zsh -n zshrc && echo "OK: zshrc"
+
+      - name: Run isolated shell regression tests
+        shell: zsh -df -e -o pipefail {0}
+        run: make test
 
   markdownlint:
     name: Markdownlint
