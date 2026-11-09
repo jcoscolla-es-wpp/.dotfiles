@@ -26,10 +26,10 @@ if command -v fzf &>/dev/null || [[ -f "$HOMEBREW_PREFIX/opt/fzf/bin/fzf" ]]; th
     --layout=reverse
     --border
     --inline-info
-    --color=fg:#d0d0d0,bg:#121212,hl:#5f87af
-    --color=fg+:#d0d0d0,bg+:#262626,hl+:#5fd7ff
-    --color=info:#afaf87,prompt:#d7005f,pointer:#af5fff
-    --color=marker:#87ff00,spinner:#af5fff,header:#87afaf
+    --color=fg:#dcd7f0,bg:#13101f,hl:#a98bf5
+    --color=fg+:#dcd7f0,bg+:#1d1830,hl+:#2fd49b
+    --color=info:#8a82ab,prompt:#2fd49b,pointer:#a98bf5
+    --color=marker:#2fd49b,spinner:#d38cf5,header:#a98bf5,border:#3a3160
   '
 
   # Use fd instead of find if available
@@ -42,7 +42,8 @@ fi
 # bat - Better cat (if installed)
 # Documentation: https://github.com/sharkdp/bat
 if command -v bat &>/dev/null; then
-  export BAT_THEME="TwoDark"
+  # "ansi" uses the terminal palette, so bat follows Emerald Arcana
+  export BAT_THEME="ansi"
   export BAT_STYLE="numbers,changes,header"
 fi
 

@@ -12,20 +12,20 @@ setopt PROMPT_SUBST
 # PROMPT CONFIGURATION - Edit these variables to customize your prompt
 # ============================================================================
 
-# Color scheme (use ZSH color codes: 0-255 or named colors like 'red', 'blue')
-# Reference: https://upload.wikimedia.org/wikipedia/commons/1/15/Xterm_256color_chart.svg
-typeset -g PROMPT_COLOR_DIR=31              # Directory path (cyan)
-typeset -g PROMPT_COLOR_GIT_BRANCH=76       # Git branch (bright green)
-typeset -g PROMPT_COLOR_GIT_CLEAN=31        # Git brackets when clean (cyan)
-typeset -g PROMPT_COLOR_GIT_STAGED=76       # Staged changes indicator (bright green)
-typeset -g PROMPT_COLOR_GIT_UNSTAGED=178    # Unstaged changes indicator (yellow/orange)
-typeset -g PROMPT_COLOR_GIT_UNTRACKED=160   # Untracked files indicator (red)
-typeset -g PROMPT_COLOR_GIT_ACTION=160      # Git action (rebase, merge, etc.) (red)
-typeset -g PROMPT_COLOR_SUCCESS=70          # Success indicator (green)
-typeset -g PROMPT_COLOR_ERROR=160           # Error indicator (red)
-typeset -g PROMPT_COLOR_ARROW=white         # Prompt arrow (white)
-typeset -g PROMPT_COLOR_VIRTUALENV=37       # Python virtualenv (cyan light)
-typeset -g PROMPT_COLOR_KUBECTL=134         # Kubectl context (magenta/pink)
+# Color scheme: ANSI indexes 0-15, mapped by the terminal to Emerald Arcana
+# (kitty.conf, scripts/palette.zsh). Avoid 16-255: those ignore the palette.
+typeset -g PROMPT_COLOR_DIR=6               # Directory path (aqua)
+typeset -g PROMPT_COLOR_GIT_BRANCH=2        # Git branch (emerald)
+typeset -g PROMPT_COLOR_GIT_CLEAN=4         # Git brackets (indigo)
+typeset -g PROMPT_COLOR_GIT_STAGED=2        # Staged changes indicator (emerald)
+typeset -g PROMPT_COLOR_GIT_UNSTAGED=3      # Unstaged changes indicator (amber)
+typeset -g PROMPT_COLOR_GIT_UNTRACKED=1     # Untracked files indicator (rose)
+typeset -g PROMPT_COLOR_GIT_ACTION=1        # Git action (rebase, merge, etc.) (rose)
+typeset -g PROMPT_COLOR_SUCCESS=2           # Success indicator (emerald)
+typeset -g PROMPT_COLOR_ERROR=1             # Error indicator (rose)
+typeset -g PROMPT_COLOR_ARROW=white         # Prompt arrow (attenuated text)
+typeset -g PROMPT_COLOR_VIRTUALENV=4        # Python virtualenv (indigo)
+typeset -g PROMPT_COLOR_KUBECTL=5           # Kubectl context (orchid)
 
 # Symbols and characters
 typeset -g PROMPT_SYMBOL_ARROW="❯"          # Main prompt arrow

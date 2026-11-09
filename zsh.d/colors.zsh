@@ -1,12 +1,12 @@
-# Color Configuration (optimized for Kitty)
+# Color Configuration: Emerald Arcana via the ANSI palette of Kitty
 
 # Configure colors for the 'less' pager
 export LESS_TERMCAP_mb=$'\E[1;31m'     # Begin bold - red
-export LESS_TERMCAP_md=$'\E[1;36m'     # Begin blink - cyan
+export LESS_TERMCAP_md=$'\E[1;32m'     # Begin bold - emerald
 export LESS_TERMCAP_me=$'\E[0m'        # End mode
-export LESS_TERMCAP_so=$'\E[01;44;33m' # Begin standout - yellow on blue
+export LESS_TERMCAP_so=$'\E[30;43m'    # Begin standout - black on amber
 export LESS_TERMCAP_se=$'\E[0m'        # End standout
-export LESS_TERMCAP_us=$'\E[1;32m'     # Begin underline - green
+export LESS_TERMCAP_us=$'\E[1;36m'     # Begin underline - aqua
 export LESS_TERMCAP_ue=$'\E[0m'        # End underline
 
 # Less options
@@ -31,14 +31,15 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # g/G=cyan, h/H=light grey, x=default foreground/background
   # ============================================================================
 
-  # TokyoNight theme (matches Kitty); other themes live in git history
-  export LSCOLORS=GxFxCxDxBxegedabagacad
+  # Emerald Arcana: dir aqua, symlink orchid, socket/pipe amber, exec emerald,
+  # special files black on a palette color. Other themes live in git history.
+  export LSCOLORS=GxFxDxDxCxagadabagacad
 
   # GNU coreutils colors for completion (brew install coreutils); ls itself
   # stays on native /bin/ls in alias.zsh to avoid iCloud timeouts
   if command -v gdircolors >/dev/null 2>&1; then
-    if [[ -r ~/.dircolors ]]; then
-      eval "$(gdircolors -b ~/.dircolors)"
+    if [[ -r "${ZSH_CONFIG_DIR:-$HOME/.zsh.d}/dircolors" ]]; then
+      eval "$(gdircolors -b "${ZSH_CONFIG_DIR:-$HOME/.zsh.d}/dircolors")"
     else
       eval "$(gdircolors -b)"
     fi

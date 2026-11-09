@@ -18,6 +18,7 @@ zinit light zsh-users/zsh-autosuggestions
 export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 export ZSH_AUTOSUGGEST_USE_ASYNC=1
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'  # ANSI bright black = comment, 5.23 contrast
 
 # Syntax highlighting (load last among completions)
 zinit ice wait'0' lucid atinit'zicompinit; zicdreplay'

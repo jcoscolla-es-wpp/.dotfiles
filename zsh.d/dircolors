@@ -1,0 +1,38 @@
+# Emerald Arcana dircolors. Basic ANSI codes only, so the terminal palette
+# (kitty.conf, scripts/palette.zsh) decides the actual colors.
+# Used by colors.zsh through gdircolors for completion lists.
+
+TERM xterm*
+TERM tmux*
+TERM screen*
+TERM *color*
+
+NORMAL 00
+FILE 00
+RESET 0
+DIR 01;36                # aqua
+LINK 01;35               # orchid
+MULTIHARDLINK 00
+FIFO 33                  # amber
+SOCK 33
+DOOR 33
+BLK 30;46                # black on aqua
+CHR 30;43                # black on amber
+ORPHAN 01;31;40          # rose, broken link
+MISSING 31
+SETUID 30;41             # black on rose
+SETGID 30;46
+CAPABILITY 00
+STICKY_OTHER_WRITABLE 30;42
+OTHER_WRITABLE 30;43
+STICKY 30;44                  # black on indigo
+EXEC 01;32               # emerald
+
+.tar 31
+.tgz 31
+.gz 31
+.zip 31
+.bz2 31
+.xz 31
+.zst 31
+.7z 31
