@@ -39,7 +39,7 @@ Install via `:Mason` command.
 
 | Plugin | What it does |
 |--------|--------------|
-| `folke/tokyonight.nvim` | Theme (Night) |
+| `folke/tokyonight.nvim` | Theme base (Night), remapped to Emerald Arcana in `on_colors` |
 | `nvim-neo-tree/neo-tree.nvim` | File explorer |
 | `nvim-telescope/telescope.nvim` | Fuzzy finder |
 | `nvim-lualine/lualine.nvim` | Statusline |

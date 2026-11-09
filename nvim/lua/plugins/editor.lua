@@ -1,6 +1,6 @@
 -- Editor plugins (file explorer, fuzzy finder, etc.)
 return {
-  -- Color scheme: TokyoNight Night
+  -- Color scheme: Emerald Arcana, tokyonight night remapped (scripts/palette.zsh)
   {
     "folke/tokyonight.nvim",
     lazy = false,
@@ -20,6 +20,70 @@ return {
       hide_inactive_statusline = false,
       dim_inactive = false,
       lualine_bold = true,
+      on_colors = function(c)
+        c.bg = "#13101f"
+        c.bg_dark = "#0e0b17"
+        c.bg_dark1 = "#0e0b17"
+        c.bg_highlight = "#1d1830"
+        c.fg = "#dcd7f0"
+        c.fg_dark = "#b4aed0"
+        c.fg_gutter = "#3a3160"
+        c.comment = "#8a82ab"
+        c.dark3 = "#8a82ab"
+        c.dark5 = "#8a82ab"
+        c.terminal_black = "#8a82ab"
+        c.blue = "#8aa0f7"
+        c.blue0 = "#5b46ad"
+        c.blue1 = "#52d6c8"
+        c.blue2 = "#52d6c8"
+        c.blue5 = "#52d6c8"
+        c.blue6 = "#52d6c8"
+        c.blue7 = "#3a3160"
+        c.cyan = "#52d6c8"
+        c.green = "#2fd49b"
+        c.green1 = "#52d6c8"
+        c.green2 = "#1fa87a"
+        c.teal = "#2fd49b"
+        c.magenta = "#d38cf5"
+        c.magenta2 = "#d38cf5"
+        c.purple = "#a98bf5"
+        c.orange = "#f0985a"
+        c.yellow = "#e8b46a"
+        c.red = "#f2728c"
+        c.red1 = "#d9566f"
+        c.git = { add = "#1fa87a", change = "#8aa0f7", delete = "#d9566f", ignore = "#8a82ab" }
+
+        -- tokyonight derives these before on_colors runs, so set them explicitly.
+        c.black = "#0e0b17"
+        c.border = "#0e0b17"
+        c.border_highlight = "#a98bf5"
+        c.bg_popup = "#0e0b17"
+        c.bg_statusline = "#0e0b17"
+        c.bg_sidebar = "#0e0b17"
+        c.bg_float = "#0e0b17"
+        c.fg_sidebar = "#b4aed0"
+        c.fg_float = "#dcd7f0"
+        c.bg_visual = "#3b2f66"
+        c.bg_search = "#5b46ad"
+        c.error = "#f2728c"
+        c.warning = "#e8b46a"
+        c.info = "#52d6c8"
+        c.hint = "#2fd49b"
+        c.todo = "#8aa0f7"
+        -- Diff backgrounds: palette colors blended 25% (15% for change) into bg.
+        c.diff = { add = "#163636", delete = "#442133", change = "#191529", text = "#3a3160" }
+        c.rainbow = { "#8aa0f7", "#e8b46a", "#2fd49b", "#52d6c8", "#d38cf5", "#a98bf5", "#f0985a", "#f2728c" }
+        c.terminal = {
+          black = "#1d1830", black_bright = "#8a82ab",
+          red = "#f2728c", red_bright = "#f2728c",
+          green = "#2fd49b", green_bright = "#2fd49b",
+          yellow = "#e8b46a", yellow_bright = "#e8b46a",
+          blue = "#8aa0f7", blue_bright = "#8aa0f7",
+          magenta = "#d38cf5", magenta_bright = "#d38cf5",
+          cyan = "#52d6c8", cyan_bright = "#52d6c8",
+          white = "#b4aed0", white_bright = "#dcd7f0",
+        }
+      end,
     },
     config = function(_, opts)
       require("tokyonight").setup(opts)
