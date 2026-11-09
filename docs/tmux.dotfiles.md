@@ -7,7 +7,7 @@ Theme: Emerald Arcana. Prefix: `C-a` (GNU Screen style).
 
 | Setting | Value |
 |---------|-------|
-| Prefix | `C-a` (also supports `C-b`) |
+| Prefix | `C-a` for both `prefix` and `prefix2`; `C-b` is unbound |
 | Terminal | `tmux-256color` (RGB support) |
 | History | 50,000 lines |
 | Mouse | On (scrolling, selection, resize) |
@@ -24,7 +24,9 @@ Theme: Emerald Arcana. Prefix: `C-a` (GNU Screen style).
 | `prefix + c` | New window |
 | `prefix + Tab` | Last window |
 | `prefix + C-h`/`C-l` | Previous/next window |
+| `prefix + p`/`n` | Previous/next window |
 | `prefix + r` | Reload config |
+| `prefix + m` | Toggle mouse mode |
 
 ## Pane Navigation (Vim-style)
 
@@ -36,15 +38,18 @@ Theme: Emerald Arcana. Prefix: `C-a` (GNU Screen style).
 | `prefix + -` | Split horizontal (current path) |
 | `prefix + _` | Split vertical (current path) |
 | `prefix + >` / `<` | Swap pane forward/back |
+| `prefix + C-r` | Send `C-l` to the application (shell clear-screen) |
+
+Unprefixed `C-l` navigates right or passes through to Neovim; it is not a shell clear-screen binding.
 
 ## Copy Mode (vi keys)
 
 | Binding | Action |
 |---------|--------|
 | `prefix + [` | Enter copy mode |
-| `Space` | Begin selection |
+| `Space` or `v` | Begin selection |
 | `C-v` | Rectangle selection |
-| `y` | Copy to `pbcopy` (macOS clipboard) |
+| `y` | Copy to `pbcopy` (macOS clipboard) and exit |
 | `Enter` | Copy to `pbcopy` and exit |
 | `H` / `L` | Jump to line start/end |
 
@@ -53,7 +58,7 @@ Theme: Emerald Arcana. Prefix: `C-a` (GNU Screen style).
 
 ## Clipboard Design
 
-No plugins. Native `pbcopy` integration:
+No clipboard plugin. Native `pbcopy` integration:
 
 - `y` in copy mode pipes directly to `pbcopy`
 - Mouse drag/double-click also use `pbcopy`
@@ -61,14 +66,16 @@ No plugins. Native `pbcopy` integration:
 
 Troubleshoot:
 
-```bash
+```zsh
 tmux list-keys -T copy-mode-vi | grep "y send"
 tmux show -g mouse
 ```
 
 ## Neovim Integration
 
-Pane navigation (`C-h/j/k/l`) is aware of Neovim splits via `vim-tmux-navigator` plugin. Seamless switching between tmux panes and Neovim windows.
+Native tmux bindings route `C-h/j/k/l` to Neovim when it is running, otherwise to tmux panes.
+The Neovim-side `vim-tmux-navigator` plugin handles editor splits.
+No duplicate tmux-side navigator plugin is loaded.
 
 ## Plugins (TPM)
 
@@ -77,19 +84,23 @@ Pane navigation (`C-h/j/k/l`) is aware of Neovim splits via `vim-tmux-navigator`
 | `tmux-plugins/tmux-sensible` | Sensible defaults |
 | `tmux-plugins/tmux-resurrect` | Save/restore sessions |
 | `tmux-plugins/tmux-continuum` | Auto-save every 15 min |
-| `christoomey/vim-tmux-navigator` | Neovim split navigation |
 
-Resurrect saves nvim sessions and pane contents. Continuum auto-restores on tmux start.
+Resurrect saves nvim sessions and pane contents.
+Continuum auto-restores on tmux start when the plugins are installed.
+TPM loads only when its executable exists.
 
 ## Install & Reload
 
-```bash
+```zsh
 make tmux              # Symlink + install TPM
 tmux source-file ~/.tmux.conf  # Reload live
 # In tmux:
 prefix + I             # Install TPM plugins
 prefix + U             # Update TPM plugins
 ```
+
+Use `make validate` for isolated parse-only checks, not a live reload.
+`make test` checks effective bindings on a private tmux server without running clipboard commands.
 
 ## Color Scheme (Emerald Arcana)
 

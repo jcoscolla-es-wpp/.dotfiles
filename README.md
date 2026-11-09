@@ -7,21 +7,21 @@ Personal macOS development environment managed via a single `Makefile`.
 [![Neovim](https://img.shields.io/badge/Editor-Neovim-57A143?style=flat-square&logo=neovim&logoColor=white)](https://neovim.io/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-[![Validate (Ubuntu)](https://github.com/javicosvml/.dotfiles/actions/workflows/validate.yml/badge.svg)](https://github.com/javicosvml/.dotfiles/actions/workflows/validate.yml)
-[![Validate (macOS)](https://github.com/javicosvml/.dotfiles/actions/workflows/validate-macos.yml/badge.svg)](https://github.com/javicosvml/.dotfiles/actions/workflows/validate-macos.yml)
-[![Security](https://github.com/javicosvml/.dotfiles/actions/workflows/security.yml/badge.svg)](https://github.com/javicosvml/.dotfiles/actions/workflows/security.yml)
+[![Validate (Ubuntu)](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/validate.yml/badge.svg)](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/validate.yml)
+[![Validate (macOS)](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/validate-macos.yml/badge.svg)](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/validate-macos.yml)
+[![Security](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/security.yml/badge.svg)](https://github.com/jcoscolla-es-wpp/.dotfiles/actions/workflows/security.yml)
 
 ---
 
 ## Quick Start
 
-```bash
-git clone https://github.com/javicosvml/.dotfiles.git ~/.dotfiles
+```zsh
+git clone https://github.com/jcoscolla-es-wpp/.dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 
 make verify   # Check system prerequisites
 make all      # Full install: Homebrew → mise → configs → tools → Kitty
-source ~/.zshrc
+exec zsh
 ```
 
 > macOS only. Review the code before running — these are personal dotfiles. Fork and adapt.
@@ -30,8 +30,9 @@ source ~/.zshrc
 
 ## Key Features
 
-- **One-command install** — `make all` chains every step idempotently; safe to re-run
-- **Modular ZSH** — 11 ordered modules in `zsh.d/` with ~47ms startup via gitstatus
+- **Explicit installation** — `make all` installs tools and configs; existing configs are backed up without overwriting backups
+- **Modular ZSH** — ten ordered core modules, Zinit, and four declared plugins installed through Makefile
+- **Predictable commands** — native Unix tools keep their names; fzf owns `Ctrl-R` history search
 - **Unified theme** — Emerald Arcana (emerald and violet) across Kitty, Tmux, Neovim, fzf, bat, and the prompt
 - **Native clipboard** — tmux copy-mode wired to `pbcopy`/`pbpaste`; no plugins
 - **Version management** — mise handles Node.js, Go, Ruby, and Terraform side-by-side
@@ -43,7 +44,7 @@ source ~/.zshrc
 | Component | Tool | Notes |
 |-----------|------|-------|
 | Shell | [ZSH](https://www.zsh.org/) + [Zinit](https://github.com/zdharma-continuum/zinit) | Plugin manager with deferred loading |
-| Prompt | [gitstatus](https://github.com/romkatv/gitstatus) | ~47ms; falls back to vcs_info |
+| Prompt | [gitstatus](https://github.com/romkatv/gitstatus) | Bounded queries; vcs_info fallback if the daemon is unavailable |
 | Terminal | [Kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated, Emerald Arcana theme |
 | Multiplexer | [Tmux](https://github.com/tmux/tmux) | Prefix `C-a`, native pbcopy bindings |
 | Editor | [Neovim](https://neovim.io/) + [lazy.nvim](https://github.com/folke/lazy.nvim) | LSP via Mason, Lua config |
@@ -56,21 +57,21 @@ source ~/.zshrc
 
 ```text
 ~/.dotfiles/
-├── Makefile                    # Unified installer — all targets idempotent
+├── Makefile                    # Installer, safe linking, validation, tests
 ├── zshrc                       # ZSH entry point → ~/.zshrc
 ├── zsh.d/                      # Modular ZSH → ~/.zsh.d/
 │   ├── env.zsh                 # Environment & PATH
 │   ├── options.zsh             # ZSH options
 │   ├── history.zsh             # History config
-│   ├── plugins.zsh             # Zinit plugins
+│   ├── plugins.zsh             # Four-plugin Zinit registry
 │   ├── prompt.zsh              # Parametrizable prompt (PROMPT_* vars)
-│   ├── completion.zsh          # Deferred completions
+│   ├── completion.zsh          # Completion initialization and styles
 │   ├── colors.zsh              # less, ls and completion colors
 │   ├── dircolors               # LS_COLORS source (ANSI codes)
 │   ├── kitty.zsh               # Kitty integration
 │   ├── alias.zsh               # Aliases (lsd, bat, git, tmux)
 │   ├── tools.zsh               # mise, fzf, bat, zoxide integration
-│   └── claude.zsh              # Claude Code / AWS Bedrock (untracked)
+│   └── aws.zsh                 # Optional generic AWS cost helper
 ├── nvim/                       # Neovim → ~/.config/nvim/
 │   ├── init.lua                # Bootstraps lazy.nvim
 │   ├── lazy-lock.json          # Plugin version lockfile
@@ -81,7 +82,10 @@ source ~/.zshrc
 ├── kitty.conf                  # Kitty → ~/.config/kitty/kitty.conf
 ├── gitignore_global            # Global gitignore → ~/.gitignore_global
 ├── scripts/
-│   └── validate-configs.zsh    # Validates tmux syntax, ZSH modules, clipboard
+│   ├── link-config.zsh         # Safe config linking and owned-link cleanup
+│   ├── validate-configs.zsh    # Isolated tmux parsing and static checks
+│   ├── test-shell.zsh          # Regression tests in disposable homes
+│   └── benchmark-shell.zsh     # macOS startup-and-exit medians, non-TTY and PTY
 └── docs/                       # Per-technology reference docs
 ```
 
@@ -91,29 +95,37 @@ source ~/.zshrc
 
 ### Install individual components
 
-```bash
-make profile    # Symlink all configs (zsh, neovim, tmux, git)
-make zsh        # ZSH only
+```zsh
+make profile    # Install profile configs and missing shell plugins/TPM
+make zsh        # ZSH config, Zinit, and declared plugins
+make zsh-plugins # Install missing shell plugins without relinking configs
 make neovim     # Neovim only
 make tmux       # Tmux + TPM
 make tools      # CLI utilities (bat, lsd, fd, ripgrep, fzf, zoxide)
-make clean      # Remove all symlinks
+make clean      # Remove only this repository's config links
 ```
 
 ### Validate after changes
 
-```bash
-zsh scripts/validate-configs.zsh   # tmux syntax, ZSH modules, clipboard
-make verify                        # System prerequisites check
+```zsh
+make validate   # Syntax/static checks; private tmux socket; clipboard untouched
+make test       # Validator plus regression tests in disposable homes
+make verify     # Report system prerequisites; install nothing
+make benchmark  # macOS warm startup-and-exit medians; not plugin-ready latency
 ```
+
+The validator checks clipboard bindings and command availability, not clipboard contents or behavior.
+`make test` includes an installed-plugin PTY check when Zinit, its editing/completion plugins,
+fzf, and zoxide are present; otherwise it reports a skip.
+Check actual interactive behavior in a terminal as well.
 
 ### Customize the prompt
 
 Edit `PROMPT_*` variables at the top of `zsh.d/prompt.zsh` directly — no separate config file.
 
-```bash
-$EDITOR ~/.zsh.d/prompt.zsh
-source ~/.zshrc
+```zsh
+$EDITOR zsh.d/prompt.zsh
+exec zsh
 ```
 
 ### Tmux clipboard (copy-mode-vi)

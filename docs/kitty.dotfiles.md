@@ -14,7 +14,7 @@ Theme: Emerald Arcana. Font: JetBrains Mono 10pt.
 | Scrollback | 10,000 lines |
 | Initial size | 1200×700 |
 | Window padding | 12px |
-| Cursor | Block, blinking 550ms |
+| Cursor | Block, blink interval `0.55` seconds (550ms); stops after 15 seconds idle |
 
 ## Keyboard Shortcuts
 
@@ -83,6 +83,10 @@ ANSI indexes 0-15 only, so the terminal palette decides their colors. Indexes 16
 - Wide color gamut (Display P3) on modern Macs
 - Remote control via `kitty @` CLI
 - Copy-on-select (mouse drag → clipboard)
+- Left Option acts as Alt for shell shortcuts; right Option retains native macOS text input
+
+Restart Kitty after changing `macos_option_as_alt`; config reload does not apply this setting.
+See the [Kitty 0.49.2 option definitions](https://github.com/kovidgoyal/kitty/blob/v0.49.2/kitty/options/definition.py).
 
 ## Transparency Adjustment
 
@@ -102,7 +106,7 @@ background_blur 70
 
 **Terminal:**
 
-```bash
+```zsh
 kill -SIGUSR1 $(pgrep kitty)
 ```
 
