@@ -67,6 +67,6 @@ repos:
         name: Validate tmux and zsh configurations
         entry: /bin/zsh scripts/validate-configs.zsh
         language: script
-        files: ^(tmux\.conf|zshrc|zsh\.d/.*\.zsh)$
+        files: ^(tmux\.conf|zshrc|zsh\.d/.*\.zsh|scripts/.*\.zsh)$
         pass_filenames: false
         stages: [pre-commit]
