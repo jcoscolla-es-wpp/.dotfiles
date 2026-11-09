@@ -16,7 +16,7 @@ zshrc
   ├─ plugins.zsh      — Zinit + lazy plugins
   ├─ prompt.zsh       — Git-aware prompt (customize via PROMPT_* vars)
   ├─ completion.zsh   — Completion styles
-  ├─ colors.zsh       — LS_COLORS
+  ├─ colors.zsh       — less, LSCOLORS, LS_COLORS (dircolors)
   ├─ kitty.zsh        — Kitty integration
   ├─ alias.zsh        — Shortcuts (git, tmux, etc.)
   └─ tools.zsh        — mise, fzf, bat, zoxide
@@ -37,8 +37,8 @@ Edit `PROMPT_*` variables at the top of `zsh.d/prompt.zsh`:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `PROMPT_COLOR_DIR` | 31 (red) | Directory color |
-| `PROMPT_COLOR_GIT_BRANCH` | 76 (blue) | Git branch color |
+| `PROMPT_COLOR_DIR` | 6 (aqua) | Directory color, ANSI index |
+| `PROMPT_COLOR_GIT_BRANCH` | 2 (emerald) | Git branch color, ANSI index |
 | `PROMPT_SHOW_GIT` | true | Show git status |
 | `PROMPT_SHOW_VIRTUALENV` | true | Show virtualenv |
 

@@ -1,7 +1,7 @@
 # Tmux Configuration
 
 Session persistence and vim-style pane navigation.
-Theme: TokyoNight Night. Prefix: `C-a` (GNU Screen style).
+Theme: Emerald Arcana. Prefix: `C-a` (GNU Screen style).
 
 ## Core Settings
 
@@ -91,15 +91,19 @@ prefix + I             # Install TPM plugins
 prefix + U             # Update TPM plugins
 ```
 
-## Color Scheme (TokyoNight Night)
+## Color Scheme (Emerald Arcana)
+
+The full palette lives in `scripts/palette.zsh` and is documented in `kitty.dotfiles.md`.
 
 | Element | Color |
 |---------|-------|
-| Background | `#1a1b26` |
-| Foreground | `#c0caf5` |
-| Active border/accent | `#7aa2f7` |
-| Active window | `#7dcfff` |
-| Inactive | `#565f89` |
-| Success | `#9ece6a` |
+| Background | `#13101f` |
+| Foreground | `#dcd7f0` |
+| Session segment and messages | `#2fd49b` |
+| Active window and border | `#a98bf5` |
+| Inactive text | `#8a82ab` |
+| Inactive pane border | `#3a3160` |
+| User and host | `#52d6c8` |
+| Bell | `#e8b46a` |
 
 See [REFERENCE.md](REFERENCE.md) for tmux quick bindings.

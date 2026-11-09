@@ -32,7 +32,7 @@ source ~/.zshrc
 
 - **One-command install** — `make all` chains every step idempotently; safe to re-run
 - **Modular ZSH** — 11 ordered modules in `zsh.d/` with ~47ms startup via gitstatus
-- **Unified theme** — TokyoNight Night across Kitty, Neovim, and Tmux
+- **Unified theme** — Emerald Arcana (emerald and violet) across Kitty, Tmux, Neovim, fzf, bat, and the prompt
 - **Native clipboard** — tmux copy-mode wired to `pbcopy`/`pbpaste`; no plugins
 - **Version management** — mise handles Node.js, Go, Ruby, and Terraform side-by-side
 
@@ -44,7 +44,7 @@ source ~/.zshrc
 |-----------|------|-------|
 | Shell | [ZSH](https://www.zsh.org/) + [Zinit](https://github.com/zdharma-continuum/zinit) | Plugin manager with deferred loading |
 | Prompt | [gitstatus](https://github.com/romkatv/gitstatus) | ~47ms; falls back to vcs_info |
-| Terminal | [Kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated, TokyoNight theme |
+| Terminal | [Kitty](https://sw.kovidgoyal.net/kitty/) | GPU-accelerated, Emerald Arcana theme |
 | Multiplexer | [Tmux](https://github.com/tmux/tmux) | Prefix `C-a`, native pbcopy bindings |
 | Editor | [Neovim](https://neovim.io/) + [lazy.nvim](https://github.com/folke/lazy.nvim) | LSP via Mason, Lua config |
 | Versions | [mise](https://mise.jdx.dev/) | Node.js, Go, Ruby, Terraform |
@@ -65,7 +65,8 @@ source ~/.zshrc
 │   ├── plugins.zsh             # Zinit plugins
 │   ├── prompt.zsh              # Parametrizable prompt (PROMPT_* vars)
 │   ├── completion.zsh          # Deferred completions
-│   ├── colors.zsh              # ls color schemes
+│   ├── colors.zsh              # less, ls and completion colors
+│   ├── dircolors               # LS_COLORS source (ANSI codes)
 │   ├── kitty.zsh               # Kitty integration
 │   ├── alias.zsh               # Aliases (lsd, bat, git, tmux)
 │   ├── tools.zsh               # mise, fzf, bat, zoxide integration
